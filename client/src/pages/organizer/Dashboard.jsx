@@ -41,7 +41,9 @@ export default function Dashboard() {
       showToast('Event published.');
       await load();
     } catch (err) {
-      setActionError(err.response?.data?.error || 'Could not publish event');
+      const message = err.response?.data?.error || 'Could not publish event';
+      setActionError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -54,7 +56,9 @@ export default function Dashboard() {
       showToast('Event cancelled.');
       await load();
     } catch (err) {
-      setActionError(err.response?.data?.error || 'Could not cancel event');
+      const message = err.response?.data?.error || 'Could not cancel event';
+      setActionError(message);
+      showToast(message, 'error');
     }
   }
 

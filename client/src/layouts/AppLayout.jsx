@@ -8,11 +8,11 @@ export default function AppLayout() {
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-          <Link to="/" className="font-semibold text-neutral-900">
+          <Link to="/explore" className="font-semibold text-neutral-900">
             NexEvent
           </Link>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <Link to="/" className="text-neutral-600 hover:text-neutral-900">
+            <Link to="/explore" className="text-neutral-600 hover:text-neutral-900">
               Explore
             </Link>
             {user?.role === 'participant' && (

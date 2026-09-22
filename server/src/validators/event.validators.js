@@ -1,10 +1,15 @@
 import { AppError } from '../utils/AppError.js';
 import { EVENT_CATEGORIES, EVENT_MODE } from '../utils/constants.js';
+import { combineDateAndTime } from '../utils/deriveDisplayStatus.js';
 
 const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+// ~5MB decoded, generous enough for a compressed poster image, small
+// enough to stay well clear of MongoDB's 16MB document limit.
+const MAX_POSTER_LENGTH = 7_000_000;
 
 export function validateEventInput(body) {
-  const { name, category, date, startTime, endTime, mode, location, capacity } = body;
+  const { name, category, date, startTime, endTime, mode, location, capacity, registrationDeadline, posterUrl } =
+    body;
   const errors = [];
 
   if (!name || !name.trim()) errors.push('Event name is required');
@@ -30,6 +35,22 @@ export function validateEventInput(body) {
 
   if (capacity === undefined || capacity === null || Number(capacity) < 1) {
     errors.push('Capacity must be at least 1');
+  }
+
+  if (registrationDeadline) {
+    const deadline = new Date(registrationDeadline);
+    if (Number.isNaN(deadline.getTime())) {
+      errors.push('Registration deadline must be a valid date');
+    } else if (validStart && date && !Number.isNaN(new Date(date).getTime())) {
+      const eventStart = combineDateAndTime(date, startTime);
+      if (deadline > eventStart) {
+        errors.push('Registration deadline must be before the event starts');
+      }
+    }
+  }
+
+  if (posterUrl && typeof posterUrl === 'string' && posterUrl.length > MAX_POSTER_LENGTH) {
+    errors.push('Poster image is too large (max ~5MB)');
   }
 
   if (errors.length) throw new AppError(errors.join('; '), 400);

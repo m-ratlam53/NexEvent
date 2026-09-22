@@ -120,10 +120,20 @@ Never expose password hashes in any API response. All secrets (Mongo URI, JWT se
   organizer: ObjectId ref User (required),
   capacity: Number (required, min 1),
   status: "draft" | "published" | "cancelled" (required, default "draft"),
+  registrationDeadline: Date | null,
+  posterUrl: String | null,
   createdAt,
   updatedAt
 }
 ```
+
+> **Change request (deadline + poster)** added `registrationDeadline` (an
+> optional organizer-set cutoff, independent of the event's own start/end
+> time — validated to fall before the event starts) and `posterUrl` (a
+> data-URI image string, capped at ~5MB server-side; there's no file
+> storage integration, matching the project's time constraints). Both are
+> optional. See section 9 for deadline enforcement and section 16 for
+> where the poster is shown.
 
 **Registration**
 ```
@@ -198,6 +208,8 @@ Cancelling a **waitlisted** entry never triggers a promotion — it only removes
 **Hard invariant, holds at all times including after promotion:** registered count for an event never exceeds its capacity — guaranteed because promotion only fires when a registered cancellation just freed exactly one seat, and promotes exactly one waitlisted entry to fill it.
 
 **Race condition note:** two simultaneous requests for the last seat could both pass the capacity check before either writes. If time allows, use `findOneAndUpdate` with an atomic capacity guard or a MongoDB transaction. If not, structure the registration logic in a dedicated service function so this can be upgraded later without touching controllers or routes. Document this as a known limitation either way. (Unchanged by the waitlist change request — left as a documented limitation rather than introducing new infrastructure; a rare simultaneous-last-seat race could theoretically let one extra registration land as "registered" instead of "waitlisted", but never breaks the registered-count ≤ capacity invariant on the promotion path itself.)
+
+**Registration deadline (change request):** an optional per-event cutoff, independent of the event's own start/end time. Checked immediately after the "event already ended" rule and before the duplicate-entry check — applies equally to a direct registration and to joining the waitlist (it's a deadline on *registering*, in the general sense), else `"The registration deadline for this event has passed"`. Enforced only server-side as the source of truth; the client also disables the Register button once the deadline has passed, for UX, but re-checks nothing it can't trust.
 
 ## 10. Venue / Map Feature
 
@@ -310,13 +322,15 @@ Avoid giant components — a page composes smaller components rather than contai
 
 **Public:** Landing page, Login, Signup
 
+**Landing page (change request):** `/` — public marketing page for logged-out visitors (hero, brief feature highlights for participants/organizers, "Get started"/"Log in" CTAs). An already-authenticated visitor is redirected straight to Explore rather than seeing it. Explore itself moved from `/` to `/explore` to make room for this.
+
 **Participant:** Explore Events, Event Details, Registration confirmation, My Registrations, Profile/account
 
 **Organizer:** Dashboard, Create Event, Edit Event, Manage Events, Participants (per event), Analytics
 
-**Explore page:** search, category filter, date filter, sort, event cards, "Recommended for you" section. Cards show: name, category, date/time, venue, organizer, seats/status — no clutter.
+**Explore page:** search, category filter, date filter, sort, event cards, "Recommended for you" section. Cards show: name, category, date/time, venue, organizer, seats/status — no clutter. **Change request:** the "Recommended for you" section is hidden entirely while a search term is active (search results speak for themselves; recommendations return once the search is cleared).
 
-**Event Details page** must answer, at a glance: What is this? When? Where (with map)? Who's organizing it? How many seats left? Am I registered? — and, since the waitlist change request, *am I waitlisted, and at what position?*
+**Event Details page** must answer, at a glance: What is this? When? Where (with map)? Who's organizing it? How many seats left? Am I registered? — and, since the waitlist change request, *am I waitlisted, and at what position?* **Change request:** also shows the event poster (if the organizer uploaded one) as a banner image at the top, and the registration deadline (if the organizer set one) alongside the other at-a-glance facts.
 
 **Organizer Dashboard:** stats strip (section 12 metrics) + event management list (status, date, registered/capacity, actions: View, Edit, Publish, Cancel, Participants, Analytics). Not a dense admin table.
 

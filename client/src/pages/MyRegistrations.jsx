@@ -39,7 +39,9 @@ export default function MyRegistrations() {
       showToast('Registration cancelled — your seat was released.');
       await load();
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not cancel registration');
+      const message = err.response?.data?.error || 'Could not cancel registration';
+      setError(message);
+      showToast(message, 'error');
     }
   }
 

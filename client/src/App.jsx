@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Explore from './pages/Explore';
@@ -15,12 +16,13 @@ import AppLayout from './layouts/AppLayout';
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Explore />} />
+          <Route path="/explore" element={<Explore />} />
           <Route path="/events/:id" element={<EventDetails />} />
           <Route path="/my-registrations" element={<MyRegistrations />} />
 

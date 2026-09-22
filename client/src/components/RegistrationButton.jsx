@@ -23,7 +23,9 @@ export default function RegistrationButton({ event, onChange }) {
       showToast(status === 'waitlisted' ? `${message} You're #${waitlistPosition} in line.` : message);
       onChange();
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      const message = err.response?.data?.error || 'Registration failed';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -44,7 +46,9 @@ export default function RegistrationButton({ event, onChange }) {
       );
       onChange();
     } catch (err) {
-      setError(err.response?.data?.error || 'Cancellation failed');
+      const message = err.response?.data?.error || 'Cancellation failed';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -78,7 +82,8 @@ export default function RegistrationButton({ event, onChange }) {
     );
   }
 
-  const blocked = BLOCKED_STATUSES.includes(event.displayStatus);
+  const deadlinePassed = event.registrationDeadline && new Date() > new Date(event.registrationDeadline);
+  const blocked = BLOCKED_STATUSES.includes(event.displayStatus) || deadlinePassed;
   const isFull = event.displayStatus === 'Full';
 
   return (
@@ -90,7 +95,10 @@ export default function RegistrationButton({ event, onChange }) {
       >
         {submitting ? 'Submitting…' : isFull ? 'Join waitlist' : 'Register'}
       </button>
-      {blocked && <p className="mt-2 text-xs text-neutral-500">Registration is not open for this event.</p>}
+      {deadlinePassed && <p className="mt-2 text-xs text-neutral-500">The registration deadline has passed.</p>}
+      {blocked && !deadlinePassed && (
+        <p className="mt-2 text-xs text-neutral-500">Registration is not open for this event.</p>
+      )}
       {isFull && !blocked && (
         <p className="mt-2 text-xs text-neutral-500">This event is full — you'll join the waitlist.</p>
       )}

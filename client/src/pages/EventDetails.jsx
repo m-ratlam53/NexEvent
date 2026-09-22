@@ -17,6 +17,16 @@ function formatDate(dateStr) {
   });
 }
 
+function formatDateTime(dateStr) {
+  return new Date(dateStr).toLocaleString(undefined, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export default function EventDetails() {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
@@ -42,9 +52,17 @@ export default function EventDetails() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <Link to="/" className="text-sm text-neutral-500 hover:text-neutral-900">
+      <Link to="/explore" className="text-sm text-neutral-500 hover:text-neutral-900">
         ← Back to Explore
       </Link>
+
+      {event.posterUrl && (
+        <img
+          src={event.posterUrl}
+          alt=""
+          className="mt-4 h-56 w-full rounded-xl border border-neutral-200 object-cover sm:h-72"
+        />
+      )}
 
       <div className="mt-4 flex items-start justify-between gap-3">
         <div>
@@ -78,6 +96,12 @@ export default function EventDetails() {
           <p className="text-neutral-400 mb-1">Seats</p>
           <CapacityIndicator registeredCount={event.registeredCount} capacity={event.capacity} />
         </div>
+        {event.registrationDeadline && (
+          <div>
+            <p className="text-neutral-400">Registration closes</p>
+            <p className="text-neutral-900">{formatDateTime(event.registrationDeadline)}</p>
+          </div>
+        )}
       </div>
 
       {event.mode === 'onsite' && event.location?.latitude != null && event.location?.longitude != null && (

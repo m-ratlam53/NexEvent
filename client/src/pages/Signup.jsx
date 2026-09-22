@@ -15,7 +15,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       await signup(form);
-      navigate('/', { replace: true });
+      navigate('/explore', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Signup failed');
     } finally {

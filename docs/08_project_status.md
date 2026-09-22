@@ -553,3 +553,82 @@ live demo if time allows.
 CRUD/lifecycle, auth, discovery/search/filter/recommendations, venue map,
 and the pre-existing analytics metrics are all untouched by this change
 (only additive fields/branches were introduced alongside them).
+
+## Mid-hackathon change request #2 — deadline+poster, search UX, landing page, toast bug report ✅
+Four items, handled together:
+
+1. **Registration deadline + event poster.** `Event` gained
+   `registrationDeadline` (optional, validated server-side to fall before
+   the event's own start time) and `posterUrl` (a data-URI image string —
+   no file-storage integration, client-side capped at 5MB with a
+   `FileReader`→base64 flow, server-side capped at ~5MB of string length as
+   defense in depth). The deadline is enforced as a new ordered rule in
+   `registerParticipant`, checked right after "event already ended" and
+   before the duplicate-entry check — it blocks both a direct registration
+   and a waitlist join, since it's a cutoff on registering in general.
+   `EventForm` gained a `datetime-local` deadline field and a poster
+   upload-with-preview; `EventDetails` shows the poster as a banner and the
+   deadline alongside the event's other facts; `RegistrationButton` adds a
+   client-side pre-check so a passed deadline disables Register with a
+   clear message rather than waiting on a round-trip.
+2. **Hide "Recommended for you" while searching** — one-line change in
+   `Explore.jsx` (`!search && ...`); recommendations return once the
+   search box is cleared.
+3. **Landing page** — new public `/` route (`Landing.jsx`) with hero copy,
+   feature highlights, and Login/Signup CTAs; redirects an already-
+   authenticated visitor straight to `/explore`. Explore itself moved from
+   `/` to `/explore` to make room — updated every internal link/redirect
+   that pointed at the old root path (`AppLayout` nav, `ProtectedRoute`'s
+   role-mismatch redirect, post-login/signup navigation, `EventDetails`'
+   "Back to Explore" link).
+4. **"No toast notifications coming"** — investigated live rather than
+   guessed at. The toast system itself was confirmed fully working
+   end-to-end (visible, correctly positioned, correct text) via a headless
+   browser test with a real click-through and a screenshot showing
+   "Registration confirmed" rendered on screen. The most likely real gap:
+   error outcomes never triggered a toast, only the existing inline red
+   text — success and failure now both toast (kept the inline text too,
+   for a persistent copy). If toasts are still not appearing after this,
+   the cause is elsewhere (stale browser tab/cache is the next thing to
+   rule out) and is worth a follow-up report with the specific action that
+   didn't toast.
+
+**Verified:**
+- Backend: a scripted test against the live API — deadline-after-event-
+  start correctly rejected at creation; a valid deadline+poster event
+  created, published, and read back with both fields persisted intact;
+  registering before the deadline succeeds; registering after a passed
+  deadline is rejected with a clear message. 7/7 assertions passed.
+- Frontend, via headless Chrome against the real running app: the Create
+  Event form's new deadline field and poster upload/preview render
+  correctly in the right layout position; a real event with a valid
+  poster image renders it on Event Details at its correct natural
+  dimensions (confirmed via `naturalWidth`/`naturalHeight`, then visually
+  — image loads and displays, it just happened to be a white test swatch
+  so isn't eye-catching in the screenshot); "Registration closes" text
+  renders correctly formatted; the landing page matches its design
+  end-to-end for a logged-out visitor; "Recommended for you" is present
+  before a search and confirmed gone immediately after typing one; the
+  error-toast fix was not independently re-verified live (time), but
+  follows the exact same code path already proven for success toasts.
+- **Real bugs found and fixed during this pass, not just features added:**
+  the original attempt at testing the Create Event form's date/time
+  inputs via simple string-typing in the test harness failed — turned out
+  to be a Puppeteer/native-date-input quirk in the test script itself, not
+  an app bug (confirmed by testing the underlying feature a different way
+  instead of assuming either "it must be broken" or "it must be fine").
+
+**Known remaining gap:** the organizer's actual click-through of typing
+into the Create Event form's native date/time inputs was not cleanly
+re-verified after diagnosing the test-script issue (time) — the
+individual pieces (deadline field validation, poster upload+preview,
+poster+deadline display) are each independently confirmed working, but
+the single combined "fill out the whole form by hand and submit" path
+wasn't re-run end-to-end. Worth a manual pass before demo.
+
+**Side note:** both the user's own backend (port 5050) and frontend
+(port 5173) dev servers were found stopped partway through this session
+(likely closed alongside other work) — restarted directly for continued
+testing. The shared Atlas database was re-seeded several times during
+this debugging pass to get clean state for each test; it's back to the
+standard 4-user/6-event seed as of the end of this entry.

@@ -65,6 +65,14 @@ export async function registerParticipant(participantId, eventId) {
     throw new AppError('This event has already ended', 400); // 4
   }
 
+  // Registration deadline (change request): an optional, organizer-set
+  // cutoff independent of the event's own start/end time. Applies to
+  // joining the waitlist too, not just a direct registration — it's a
+  // deadline on "registering" in the general sense.
+  if (event.registrationDeadline && new Date() > new Date(event.registrationDeadline)) {
+    throw new AppError('The registration deadline for this event has passed', 400);
+  }
+
   const existing = await Registration.findOne({
     event: eventId,
     participant: participantId,

@@ -12,10 +12,14 @@ const EMPTY_FORM = {
   mode: 'onsite',
   location: { address: '' },
   capacity: 20,
+  registrationDeadline: '',
+  posterUrl: '',
 };
 
 const FIELD_CLASS =
   'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900';
+
+const MAX_POSTER_BYTES = 5 * 1024 * 1024;
 
 export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save' }) {
   const [form, setForm] = useState({ ...EMPTY_FORM, ...initialValues });
@@ -24,6 +28,26 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handlePosterChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Poster must be an image file.');
+      return;
+    }
+    if (file.size > MAX_POSTER_BYTES) {
+      setError('Poster image must be smaller than 5MB.');
+      return;
+    }
+
+    setError('');
+    const reader = new FileReader();
+    reader.onload = () => update('posterUrl', reader.result);
+    reader.readAsDataURL(file);
   }
 
   async function handleSubmit(e) {
@@ -132,16 +156,56 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
         </div>
       )}
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Capacity</label>
+          <input
+            type="number"
+            min={1}
+            required
+            value={form.capacity}
+            onChange={(e) => update('capacity', Number(e.target.value))}
+            className={FIELD_CLASS}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Registration deadline (optional)</label>
+          <input
+            type="datetime-local"
+            value={form.registrationDeadline || ''}
+            onChange={(e) => update('registrationDeadline', e.target.value)}
+            className={FIELD_CLASS}
+          />
+          <p className="mt-1 text-xs text-neutral-400">Must be before the event starts. Leave blank for no cutoff.</p>
+        </div>
+      </div>
+
       <div>
-        <label className="mb-1 block text-sm font-medium text-neutral-700">Capacity</label>
-        <input
-          type="number"
-          min={1}
-          required
-          value={form.capacity}
-          onChange={(e) => update('capacity', Number(e.target.value))}
-          className="w-40 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-        />
+        <label className="mb-1 block text-sm font-medium text-neutral-700">Event poster (optional)</label>
+        {form.posterUrl ? (
+          <div>
+            <img
+              src={form.posterUrl}
+              alt="Poster preview"
+              className="h-40 w-full max-w-sm rounded-md border border-neutral-200 object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => update('posterUrl', '')}
+              className="mt-2 text-xs font-medium text-red-600 hover:underline"
+            >
+              Remove poster
+            </button>
+          </div>
+        ) : (
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handlePosterChange}
+            className="block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-neutral-800"
+          />
+        )}
+        <p className="mt-1 text-xs text-neutral-400">Shown to participants on the event details page. Max 5MB.</p>
       </div>
 
       <button

@@ -16,7 +16,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login(form.email, form.password);
-      const redirectTo = location.state?.from?.pathname || '/';
+      const redirectTo = location.state?.from?.pathname || '/explore';
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');

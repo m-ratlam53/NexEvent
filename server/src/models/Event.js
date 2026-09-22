@@ -17,6 +17,12 @@ const eventSchema = new mongoose.Schema(
     },
     organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     capacity: { type: Number, required: true, min: 1 },
+    // Optional cutoff after which no new registrations/waitlist joins are
+    // accepted, even if the event itself hasn't started yet.
+    registrationDeadline: { type: Date, default: null },
+    // Data URI (base64) or external URL — stored as plain text rather than
+    // a file-storage integration, matching the project's time constraints.
+    posterUrl: { type: String, default: null },
     status: {
       type: String,
       enum: Object.values(EVENT_STATUS),

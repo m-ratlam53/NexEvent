@@ -64,7 +64,7 @@ export default function Explore() {
         <EventFilters filters={filters} onChange={setFilters} />
       </div>
 
-      {user?.role === 'participant' && recommendedStatus === 'ready' && recommended.length > 0 && (
+      {!search && user?.role === 'participant' && recommendedStatus === 'ready' && recommended.length > 0 && (
         <div className="mb-10">
           <h2 className="mb-3 text-lg font-semibold text-neutral-900">Recommended for you</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

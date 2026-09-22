@@ -49,7 +49,9 @@ export default function EditEvent() {
       setEvent(await publishEventRequest(id));
       showToast('Event published.');
     } catch (err) {
-      setActionError(err.response?.data?.error || 'Could not publish this event');
+      const message = err.response?.data?.error || 'Could not publish this event';
+      setActionError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -60,7 +62,9 @@ export default function EditEvent() {
       setEvent(await cancelEventRequest(id));
       showToast('Event cancelled.');
     } catch (err) {
-      setActionError(err.response?.data?.error || 'Could not cancel this event');
+      const message = err.response?.data?.error || 'Could not cancel this event';
+      setActionError(message);
+      showToast(message, 'error');
     }
   }
 
@@ -92,7 +96,11 @@ export default function EditEvent() {
       </div>
       {actionError && <p className="mb-4 text-sm text-red-600">{actionError}</p>}
       <EventForm
-        initialValues={{ ...event, date: event.date?.slice(0, 10) }}
+        initialValues={{
+          ...event,
+          date: event.date?.slice(0, 10),
+          registrationDeadline: event.registrationDeadline?.slice(0, 16) || '',
+        }}
         onSubmit={handleSubmit}
         submitLabel="Save changes"
       />

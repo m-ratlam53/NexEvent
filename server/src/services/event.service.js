@@ -6,8 +6,32 @@ import { deriveDisplayStatus } from '../utils/deriveDisplayStatus.js';
 import { validateEventInput } from '../validators/event.validators.js';
 
 function pickEventFields(data) {
-  const { name, description, category, date, startTime, endTime, mode, location, capacity } = data;
-  return { name, description, category, date, startTime, endTime, mode, location, capacity };
+  const {
+    name,
+    description,
+    category,
+    date,
+    startTime,
+    endTime,
+    mode,
+    location,
+    capacity,
+    registrationDeadline,
+    posterUrl,
+  } = data;
+  return {
+    name,
+    description,
+    category,
+    date,
+    startTime,
+    endTime,
+    mode,
+    location,
+    capacity,
+    registrationDeadline: registrationDeadline || null,
+    posterUrl: posterUrl || null,
+  };
 }
 
 // Registration counts are always derived from Registration.countDocuments,
