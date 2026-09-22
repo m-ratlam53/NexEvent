@@ -53,7 +53,7 @@ export default function Landing() {
   const { user, loading } = useAuth();
 
   if (loading) return null;
-  if (user) return <Navigate to="/explore" replace />;
+  if (user) return <Navigate to={user.role === 'organizer' ? '/dashboard' : '/explore'} replace />;
 
   return (
     <div className="min-h-screen overflow-hidden bg-neutral-50">

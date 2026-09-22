@@ -5,6 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 import { FIELD_CLASS, LABEL_CLASS, BUTTON_PRIMARY } from '../utils/styles';
 
+// `location.state.from` (set by ProtectedRoute when redirecting an
+// unauthenticated visit to /login) is only honored when it's reachable by
+// the role that just logged in — otherwise it can carry over a stale
+// organizer-only path (e.g. left over from a previous session in the same
+// tab) and bounce a participant somewhere they don't belong instead of
+// their own role home.
+function resolveLoginRedirect(fromPathname, role) {
+  const roleHome = role === 'organizer' ? '/dashboard' : '/explore';
+  const isOrganizerOnlyPath = fromPathname === '/dashboard' || fromPathname?.startsWith('/organizer/');
+  if (!fromPathname || (isOrganizerOnlyPath && role !== 'organizer')) return roleHome;
+  return fromPathname;
+}
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -18,8 +31,8 @@ export default function Login() {
     setError('');
     setSubmitting(true);
     try {
-      await login(form.email, form.password);
-      const redirectTo = location.state?.from?.pathname || '/explore';
+      const loggedInUser = await login(form.email, form.password);
+      const redirectTo = resolveLoginRedirect(location.state?.from?.pathname, loggedInUser.role);
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');

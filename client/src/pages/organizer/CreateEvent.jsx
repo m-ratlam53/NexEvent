@@ -17,7 +17,7 @@ export default function CreateEvent() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Link
-        to="/organizer/events"
+        to="/dashboard"
         className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-neutral-900"
       >
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">

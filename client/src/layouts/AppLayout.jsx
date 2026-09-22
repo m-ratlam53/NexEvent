@@ -31,6 +31,29 @@ const ICONS = {
       />
     </svg>
   ),
+  create: (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.75} stroke="currentColor" className="h-5 w-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  ),
+  analytics: (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.75} stroke="currentColor" className="h-5 w-5">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3 3v16.5A1.5 1.5 0 004.5 21H21M7.5 15.75V9m4.5 6.75V5.25m4.5 10.5v-4.5"
+      />
+    </svg>
+  ),
+  profile: (
+    <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.75} stroke="currentColor" className="h-5 w-5">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M17.25 20.25v-1.5a3.75 3.75 0 00-3.75-3.75h-3a3.75 3.75 0 00-3.75 3.75v1.5m10.5-11.25a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"
+      />
+    </svg>
+  ),
   logout: (
     <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.75} stroke="currentColor" className="h-5 w-5">
       <path
@@ -51,6 +74,23 @@ const ICONS = {
     </svg>
   ),
 };
+
+// Exact required order per role — Dashboard/Create Event/Analytics/Explore/
+// Profile for organizers, Explore/My Registrations/Profile for participants.
+// Logout is rendered separately, below, always last.
+const ORGANIZER_NAV = [
+  { to: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
+  { to: '/organizer/events/new', icon: 'create', label: 'Create Event' },
+  { to: '/organizer/analytics', icon: 'analytics', label: 'Analytics' },
+  { to: '/explore', icon: 'explore', label: 'Explore' },
+  { to: '/profile', icon: 'profile', label: 'Profile' },
+];
+
+const PARTICIPANT_NAV = [
+  { to: '/explore', icon: 'explore', label: 'Explore' },
+  { to: '/my-registrations', icon: 'registrations', label: 'My Registrations' },
+  { to: '/profile', icon: 'profile', label: 'Profile' },
+];
 
 function NavItem({ to, icon, children, onClick }) {
   return (
@@ -81,19 +121,11 @@ function SidebarContent({ user, logout, onNavigate }) {
       </Link>
 
       <nav className="mt-8 flex-1 space-y-1">
-        <NavItem to="/explore" icon={ICONS.explore} onClick={onNavigate}>
-          Explore
-        </NavItem>
-        {user?.role === 'participant' && (
-          <NavItem to="/my-registrations" icon={ICONS.registrations} onClick={onNavigate}>
-            My Registrations
+        {(user?.role === 'organizer' ? ORGANIZER_NAV : PARTICIPANT_NAV).map((item) => (
+          <NavItem key={item.to} to={item.to} icon={ICONS[item.icon]} onClick={onNavigate}>
+            {item.label}
           </NavItem>
-        )}
-        {user?.role === 'organizer' && (
-          <NavItem to="/organizer/events" icon={ICONS.dashboard} onClick={onNavigate}>
-            Dashboard
-          </NavItem>
-        )}
+        ))}
       </nav>
 
       <div className="border-t border-neutral-200 pt-3">

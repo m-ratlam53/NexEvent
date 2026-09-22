@@ -17,8 +17,8 @@ export default function Signup() {
     setError('');
     setSubmitting(true);
     try {
-      await signup(form);
-      navigate('/explore', { replace: true });
+      const newUser = await signup(form);
+      navigate(newUser.role === 'organizer' ? '/dashboard' : '/explore', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Signup failed');
     } finally {
