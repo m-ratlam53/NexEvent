@@ -6,7 +6,8 @@ const SORT_OPTIONS = [
   { value: 'name', label: 'Name (A–Z)' },
 ];
 
-const SELECT_CLASS = 'rounded-md border border-neutral-300 px-3 py-2 text-sm';
+const SELECT_CLASS =
+  'rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm shadow-sm transition-all focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15';
 
 export default function EventFilters({ filters, onChange }) {
   function update(field, value) {
@@ -44,7 +45,7 @@ export default function EventFilters({ filters, onChange }) {
       {hasActiveFilters && (
         <button
           onClick={() => onChange({ category: '', date: '', sort: 'date' })}
-          className="text-sm text-neutral-500 hover:text-neutral-900"
+          className="rounded-full px-3 py-1.5 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
         >
           Clear filters
         </button>

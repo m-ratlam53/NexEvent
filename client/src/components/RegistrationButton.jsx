@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { registerForEvent, cancelRegistrationRequest } from '../services/registrations.service';
 import ConfirmDialog from './ConfirmDialog';
+import { BUTTON_PRIMARY, BUTTON_DANGER } from '../utils/styles';
 
 const BLOCKED_STATUSES = ['Completed', 'Cancelled', 'Draft'];
 
@@ -57,11 +58,7 @@ export default function RegistrationButton({ event, onChange }) {
   if (event.isRegistered || event.isWaitlisted) {
     return (
       <div>
-        <button
-          onClick={() => setConfirmOpen(true)}
-          disabled={submitting}
-          className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-        >
+        <button onClick={() => setConfirmOpen(true)} disabled={submitting} className={BUTTON_DANGER}>
           {event.isWaitlisted ? 'Leave waitlist' : 'Cancel registration'}
         </button>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
@@ -88,11 +85,7 @@ export default function RegistrationButton({ event, onChange }) {
 
   return (
     <div>
-      <button
-        onClick={handleRegister}
-        disabled={blocked || submitting}
-        className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
-      >
+      <button onClick={handleRegister} disabled={blocked || submitting} className={BUTTON_PRIMARY}>
         {submitting ? 'Submitting…' : isFull ? 'Join waitlist' : 'Register'}
       </button>
       {deadlinePassed && <p className="mt-2 text-xs text-neutral-500">The registration deadline has passed.</p>}

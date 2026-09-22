@@ -7,6 +7,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
+import PageFade, { RevealGroup, RevealItem } from '../components/motion/Reveal';
 
 export default function MyRegistrations() {
   const { showToast } = useToast();
@@ -50,46 +51,54 @@ export default function MyRegistrations() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-semibold text-neutral-900">My Registrations</h1>
+      <PageFade>
+        <h1 className="font-display text-3xl font-bold text-neutral-900">My Registrations</h1>
+        <p className="mt-1 text-sm text-neutral-500">Events you're registered for or waitlisted on.</p>
+      </PageFade>
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 mt-6 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
       {registrations.length === 0 && (
-        <EmptyState title="No registrations yet" description="Explore events and register to see them here." />
+        <div className="mt-6">
+          <EmptyState title="No registrations yet" description="Explore events and register to see them here." />
+        </div>
       )}
 
       {registrations.length > 0 && (
-        <div className="divide-y divide-neutral-200 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <RevealGroup className="mt-6 space-y-3" stagger={0.05}>
           {registrations.map((reg) => (
-            <div key={reg._id} className="flex items-center justify-between gap-4 px-4 py-3">
-              <Link to={`/events/${reg.event?._id}`} className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-neutral-900">{reg.event?.name}</p>
-                <p className="text-xs text-neutral-500">
-                  {reg.event ? new Date(reg.event.date).toLocaleDateString() : ''} · by {reg.event?.organizer?.name}
-                </p>
-              </Link>
-              <div className="flex items-center gap-3">
-                <EventStatus
-                  status={
-                    reg.status === 'cancelled'
-                      ? 'Cancelled'
-                      : reg.status === 'waitlisted'
-                        ? `Waitlisted · #${reg.waitlistPosition}`
-                        : 'Registered'
-                  }
-                />
-                {(reg.status === 'registered' || reg.status === 'waitlisted') && (
-                  <button
-                    onClick={() => setPendingCancelId(reg._id)}
-                    className="text-sm font-medium text-red-600 hover:underline"
-                  >
-                    {reg.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel'}
-                  </button>
-                )}
+            <RevealItem key={reg._id}>
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
+                <Link to={`/events/${reg.event?._id}`} className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-neutral-900">{reg.event?.name}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500">
+                    {reg.event ? new Date(reg.event.date).toLocaleDateString() : ''} · by{' '}
+                    {reg.event?.organizer?.name}
+                  </p>
+                </Link>
+                <div className="flex items-center gap-3">
+                  <EventStatus
+                    status={
+                      reg.status === 'cancelled'
+                        ? 'Cancelled'
+                        : reg.status === 'waitlisted'
+                          ? `Waitlisted · #${reg.waitlistPosition}`
+                          : 'Registered'
+                    }
+                  />
+                  {(reg.status === 'registered' || reg.status === 'waitlisted') && (
+                    <button
+                      onClick={() => setPendingCancelId(reg._id)}
+                      className="text-sm font-medium text-red-600 hover:underline"
+                    >
+                      {reg.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel'}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
       )}
 
       <ConfirmDialog

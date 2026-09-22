@@ -4,6 +4,7 @@ import { fetchEventAnalytics } from '../../services/analytics.service';
 import AnalyticsCard from '../../components/AnalyticsCard';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import PageFade, { RevealGroup, RevealItem } from '../../components/motion/Reveal';
 
 export default function EventAnalytics() {
   const { id } = useParams();
@@ -32,18 +33,33 @@ export default function EventAnalytics() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <Link to="/organizer/events" className="text-sm text-neutral-500 hover:text-neutral-900">
+      <Link
+        to="/organizer/events"
+        className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+      >
         ← Back to Dashboard
       </Link>
-      <h1 className="mb-6 mt-4 text-2xl font-semibold text-neutral-900">{analytics.name} — Analytics</h1>
+      <PageFade delay={0.05}>
+        <h1 className="font-display mb-6 mt-3 text-2xl font-bold text-neutral-900">{analytics.name}</h1>
+      </PageFade>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-        <AnalyticsCard label="Registered" value={analytics.registeredCount} />
-        <AnalyticsCard label="Waitlisted" value={analytics.waitlistedCount} />
-        <AnalyticsCard label="Capacity" value={analytics.capacity} />
-        <AnalyticsCard label="Available seats" value={analytics.availableSeats} />
-        <AnalyticsCard label="Registration rate" value={`${analytics.registrationPercentage}%`} />
-      </div>
+      <RevealGroup className="grid grid-cols-2 gap-4 sm:grid-cols-5" stagger={0.05}>
+        <RevealItem>
+          <AnalyticsCard label="Registered" value={analytics.registeredCount} />
+        </RevealItem>
+        <RevealItem>
+          <AnalyticsCard label="Waitlisted" value={analytics.waitlistedCount} />
+        </RevealItem>
+        <RevealItem>
+          <AnalyticsCard label="Capacity" value={analytics.capacity} />
+        </RevealItem>
+        <RevealItem>
+          <AnalyticsCard label="Available seats" value={analytics.availableSeats} />
+        </RevealItem>
+        <RevealItem>
+          <AnalyticsCard label="Registration rate" value={`${analytics.registrationPercentage}%`} />
+        </RevealItem>
+      </RevealGroup>
     </div>
   );
 }

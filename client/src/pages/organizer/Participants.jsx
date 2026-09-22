@@ -5,13 +5,19 @@ import EventStatus from '../../components/EventStatus';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 import EmptyState from '../../components/EmptyState';
+import PageFade, { RevealGroup, RevealItem } from '../../components/motion/Reveal';
 
 function ParticipantRow({ reg, statusLabel }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <div>
-        <p className="text-sm font-medium text-neutral-900">{reg.participant?.name}</p>
-        <p className="text-xs text-neutral-500">{reg.participant?.email}</p>
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-xs font-semibold text-white">
+          {reg.participant?.name?.[0]?.toUpperCase()}
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-neutral-900">{reg.participant?.name}</p>
+          <p className="text-xs text-neutral-500">{reg.participant?.email}</p>
+        </div>
       </div>
       <EventStatus status={statusLabel} />
     </div>
@@ -52,34 +58,45 @@ export default function Participants() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <Link to="/organizer/events" className="text-sm text-neutral-500 hover:text-neutral-900">
+      <Link
+        to="/organizer/events"
+        className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+      >
         ← Back to Dashboard
       </Link>
-      <h1 className="mb-1 mt-4 text-2xl font-semibold text-neutral-900">{event.name} — Participants</h1>
-      <p className="mb-6 text-sm text-neutral-500">
-        {registered.length} registered of {event.capacity} seats
-        {waitlisted.length > 0 && ` · ${waitlisted.length} waitlisted`}
-      </p>
+      <PageFade delay={0.05}>
+        <h1 className="font-display mb-1 mt-3 text-2xl font-bold text-neutral-900">{event.name}</h1>
+        <p className="mb-6 text-sm text-neutral-500">
+          {registered.length} registered of {event.capacity} seats
+          {waitlisted.length > 0 && ` · ${waitlisted.length} waitlisted`}
+        </p>
+      </PageFade>
 
       <h2 className="mb-2 text-sm font-semibold text-neutral-700">Registered</h2>
       {registered.length === 0 ? (
-        <EmptyState title="No one registered yet" />
-      ) : (
-        <div className="mb-8 divide-y divide-neutral-200 overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          {registered.map((reg) => (
-            <ParticipantRow key={reg._id} reg={reg} statusLabel="Registered" />
-          ))}
+        <div className="mb-8">
+          <EmptyState title="No one registered yet" />
         </div>
+      ) : (
+        <RevealGroup className="mb-8 space-y-2.5" stagger={0.04}>
+          {registered.map((reg) => (
+            <RevealItem key={reg._id}>
+              <ParticipantRow reg={reg} statusLabel="Registered" />
+            </RevealItem>
+          ))}
+        </RevealGroup>
       )}
 
       {waitlisted.length > 0 && (
         <>
           <h2 className="mb-2 text-sm font-semibold text-neutral-700">Waitlisted</h2>
-          <div className="divide-y divide-neutral-200 overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <RevealGroup className="space-y-2.5" stagger={0.04}>
             {waitlisted.map((reg) => (
-              <ParticipantRow key={reg._id} reg={reg} statusLabel={`Waitlisted · #${reg.waitlistPosition}`} />
+              <RevealItem key={reg._id}>
+                <ParticipantRow reg={reg} statusLabel={`Waitlisted · #${reg.waitlistPosition}`} />
+              </RevealItem>
             ))}
-          </div>
+          </RevealGroup>
         </>
       )}
     </div>
