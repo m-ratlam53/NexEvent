@@ -81,3 +81,13 @@ export async function getParticipantRegistrations(participantId) {
       populate: { path: 'organizer', select: 'name' },
     });
 }
+
+export async function getEventRegistrations(eventId, organizerId) {
+  const event = await Event.findById(eventId);
+  if (!event) throw new AppError('Event not found', 404);
+  if (event.organizer.toString() !== organizerId) {
+    throw new AppError('You do not have permission to view this event\'s participants', 403);
+  }
+
+  return Registration.find({ event: eventId }).sort({ createdAt: -1 }).populate('participant', 'name email');
+}

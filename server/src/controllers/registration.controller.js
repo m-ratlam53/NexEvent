@@ -26,3 +26,12 @@ export async function myRegistrations(req, res, next) {
     next(err);
   }
 }
+
+export async function eventRegistrations(req, res, next) {
+  try {
+    const registrations = await registrationService.getEventRegistrations(req.params.id, req.user.id);
+    res.json({ registrations });
+  } catch (err) {
+    next(err);
+  }
+}

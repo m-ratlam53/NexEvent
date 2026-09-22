@@ -22,7 +22,7 @@ export default function AppLayout() {
             )}
             {user?.role === 'organizer' && (
               <Link to="/organizer/events" className="text-neutral-600 hover:text-neutral-900">
-                My Events
+                Dashboard
               </Link>
             )}
             <span className="text-neutral-400">{user?.name}</span>

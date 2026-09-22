@@ -4,9 +4,11 @@ import Signup from './pages/Signup';
 import Explore from './pages/Explore';
 import EventDetails from './pages/EventDetails';
 import MyRegistrations from './pages/MyRegistrations';
-import ManageEvents from './pages/organizer/ManageEvents';
+import Dashboard from './pages/organizer/Dashboard';
 import CreateEvent from './pages/organizer/CreateEvent';
 import EditEvent from './pages/organizer/EditEvent';
+import Participants from './pages/organizer/Participants';
+import EventAnalytics from './pages/organizer/EventAnalytics';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import AppLayout from './layouts/AppLayout';
 
@@ -23,9 +25,11 @@ function App() {
           <Route path="/my-registrations" element={<MyRegistrations />} />
 
           <Route element={<ProtectedRoute roles={['organizer']} />}>
-            <Route path="/organizer/events" element={<ManageEvents />} />
+            <Route path="/organizer/events" element={<Dashboard />} />
             <Route path="/organizer/events/new" element={<CreateEvent />} />
             <Route path="/organizer/events/:id/edit" element={<EditEvent />} />
+            <Route path="/organizer/events/:id/participants" element={<Participants />} />
+            <Route path="/organizer/events/:id/analytics" element={<EventAnalytics />} />
           </Route>
         </Route>
       </Route>

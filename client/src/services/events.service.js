@@ -20,6 +20,11 @@ export async function fetchOrganizerEvents() {
   return data.events;
 }
 
+export async function fetchEventRegistrations(eventId) {
+  const { data } = await api.get(`/events/${eventId}/registrations`);
+  return data.registrations;
+}
+
 export async function createEventRequest(payload) {
   const { data } = await api.post('/events', payload);
   return data.event;

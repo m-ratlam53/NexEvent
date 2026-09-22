@@ -244,3 +244,44 @@ in this environment) — same caveat carried forward from Phases 3–5.
 
 **Not started:** Phases 7–11 (organizer analytics, map integration, general
 polish, automated tests, docs).
+
+## Phase 7 — Organizer dashboard & analytics ✅
+- **Backend:** `analytics.service.js` computes exactly the six section-12
+  metrics from live data (never a stored counter): `getOrganizerDashboardAnalytics`
+  rolls up total events, upcoming-events count (published events whose
+  `displayStatus` is Upcoming/Almost Full/Full/Ongoing), total registrations,
+  total available seats, and an aggregate registration percentage across all
+  of an organizer's events, plus a per-event breakdown; `getEventAnalytics`
+  returns the same shape for one event, ownership-checked. `registration.service.js`
+  gained `getEventRegistrations` (ownership-checked participant list, both
+  active and cancelled registrations so history is visible, per the spec's
+  soft-cancel philosophy). New routes: `GET /api/organizer/analytics`,
+  `GET /api/events/:id/analytics`, `GET /api/events/:id/registrations` — all
+  organizer-only and ownership-checked.
+- **Frontend:** `AnalyticsCard` component; `Dashboard.jsx` replaces the
+  Phase-4 `ManageEvents` page (same list, now with a stats strip on top and
+  Participants/Analytics links added to each row's actions — kept as one
+  page rather than two near-duplicate list views, since the spec's own
+  description of "Organizer Dashboard" already includes the full event
+  list with actions). New `Participants` and `EventAnalytics` pages per
+  event. Nav link relabeled "Dashboard".
+
+**Verified (live smoke test against re-seeded local MongoDB):**
+- Registered 2 participants across 2 of organizer1's events (capacities
+  60/5/30, 2/1/0 registered) and confirmed the dashboard rollup arithmetic
+  by hand: `totalRegistrations: 3`, `availableSeats: 92`
+  ((60-2)+(5-1)+(30-0)), `registrationPercentage: 3.2` (3/95), and
+  `upcomingEventsCount: 2` (draft correctly excluded).
+- Single-event analytics for React Summit matches the per-event slice of
+  the dashboard rollup.
+- A different organizer requesting another organizer's event
+  analytics/participants → 403 on both endpoints.
+- Participants list correctly returns name/email/status for each
+  registration.
+- `client`: `npm run build` succeeds (110 modules, no import errors).
+
+**Not independently verified:** interactive browser testing (no browser tool
+in this environment) — same caveat carried forward from Phases 3–6.
+
+**Not started:** Phases 8–11 (map integration, general polish, automated
+tests, docs).
