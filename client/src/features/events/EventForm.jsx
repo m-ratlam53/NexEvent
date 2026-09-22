@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EVENT_CATEGORIES } from '../../utils/constants';
+import EventMap from '../../components/EventMap';
 
 const EMPTY_FORM = {
   name: '',
@@ -28,6 +29,12 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    if (form.mode === 'onsite' && !form.location?.address) {
+      setError('Search for a venue and select a result before saving.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await onSubmit(form);
@@ -117,16 +124,11 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
       {form.mode === 'onsite' && (
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Venue address</label>
-          <input
-            required
-            value={form.location?.address || ''}
-            onChange={(e) => update('location', { ...form.location, address: e.target.value })}
-            className={FIELD_CLASS}
-          />
-          <p className="mt-1 text-xs text-neutral-400">
-            Map-based venue picker arrives in a later phase — plain text for now.
-          </p>
+          <label className="mb-1 block text-sm font-medium text-neutral-700">Venue</label>
+          <EventMap mode="picker" value={form.location} onChange={(location) => update('location', location)} />
+          {!form.location?.address && (
+            <p className="mt-1 text-xs text-neutral-400">Search for a venue above and select a result.</p>
+          )}
         </div>
       )}
 

@@ -285,3 +285,72 @@ in this environment) — same caveat carried forward from Phases 3–6.
 
 **Not started:** Phases 8–11 (map integration, general polish, automated
 tests, docs).
+
+## Phase 8 — Map integration ✅
+No `MAPTILER_API_KEY`/`VITE_MAPTILER_API_KEY` was available in this
+environment (confirmed empty in both `.env.example` files and no `.env`
+present). Per the spec's own instruction — "if an external API/key is
+unavailable, keep the architecture correct, use clean config, and fail
+gracefully" — this phase was built with a real, working MapTiler
+integration *and* a deliberate, tested fallback path for when the key is
+absent, rather than skipping the feature or faking credentials.
+
+- **Design decision — where the key lives:** section 6 lists the MapTiler
+  key alongside `MONGO_URI`/`JWT_SECRET` as a server-side secret, but
+  MapTiler (like Mapbox) issues keys specifically meant to be used from the
+  browser for map tile rendering — domain restriction in the MapTiler
+  dashboard is the actual security boundary, not secrecy. Building a
+  backend proxy for geocoding too would add a layer with no real security
+  benefit (the key would still be visible in our own proxy's outbound
+  request) for a 3-hour build. So `VITE_MAPTILER_API_KEY` (already scaffolded
+  in `client/.env.example` back in Phase 2) is used directly by the browser
+  for both the MapLibre style/tiles and the geocoding search fetch; no new
+  backend endpoint was needed.
+- **`EventMap` component** (`client/src/components/EventMap.jsx`): the one
+  reusable component required by section 10, used in two modes.
+  `mode="picker"` (organizer Create/Edit form): debounced (400ms, 3+ chars)
+  MapTiler geocoding search, a result list, selecting a result sets the
+  marker and calls back with `{address, latitude, longitude}` — the
+  organizer never types coordinates. `mode="display"` (Event Details):
+  fixed marker at the event's location plus a "Get Directions" link built
+  as a plain `google.com/maps/dir` URL from lat/lng (no API call, per spec).
+  Wired into `EventForm` (replacing the Phase 4 plain-text address input)
+  and into `EventDetails` (shown for onsite events only, matching the
+  spec's "map is only for showing/picking a venue, never for browsing
+  events").
+- **Graceful degradation, actually exercised:** with no key configured (the
+  real state of this environment), the picker mode falls back to a plain
+  address text input (preserving the Phase 4 behavior, so organizers can
+  still create onsite events) with a note explaining why the map is
+  unavailable; display mode falls back to an address-only message.
+  **Caught and fixed during testing:** the first version of this fallback
+  showed only a static "map unavailable" message in picker mode with no
+  address input at all — which would have silently blocked organizers from
+  creating any onsite event whenever the key is missing. Fixed before
+  committing.
+- **Fixed during the build:** `maplibre-gl` v6's ESM build has no default
+  export (`import maplibregl from 'maplibre-gl'` failed the production
+  build with `MISSING_EXPORT`) — switched to the named exports
+  (`MapLibreMap`, `Marker`, `NavigationControl`).
+
+**Verified:**
+- `npm run build` succeeds after the named-export fix (114 modules).
+- Vite dev server serves `EventMap.jsx` and transforms it without error;
+  inspected the transformed module directly and confirmed
+  `MAPTILER_KEY`/`STYLE_URL` correctly resolve to falsy/`null` with no env
+  var set, which is what drives the fallback branch.
+- End-to-end through the real API: created an onsite event with
+  `location: {address, latitude: null, longitude: null}` (exactly what the
+  no-key fallback UI sends) — 201, validator and schema both accept it.
+
+**Not independently verified — genuinely untested, flagged explicitly:**
+the actual MapLibre map render, live MapTiler geocoding search/results, and
+marker placement have **not** been visually verified, because this
+environment has neither a MapTiler key nor a browser tool. The component
+logic was reviewed carefully and the module loads/transforms without
+error, but "compiles and the fallback path works" is not the same claim as
+"the map renders correctly and geocoding returns good results" — that
+still needs a real key and a manual pass in a browser before this feature
+is demo-ready. Same no-browser caveat as Phases 3–7 otherwise applies.
+
+**Not started:** Phases 9–11 (general polish, automated tests, docs).

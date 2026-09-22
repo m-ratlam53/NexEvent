@@ -4,6 +4,7 @@ import { fetchEventById } from '../services/events.service';
 import EventStatus from '../components/EventStatus';
 import CapacityIndicator from '../components/CapacityIndicator';
 import RegistrationButton from '../components/RegistrationButton';
+import EventMap from '../components/EventMap';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 
@@ -78,6 +79,13 @@ export default function EventDetails() {
           <CapacityIndicator registeredCount={event.registeredCount} capacity={event.capacity} />
         </div>
       </div>
+
+      {event.mode === 'onsite' && event.location?.latitude != null && event.location?.longitude != null && (
+        <div className="mt-6">
+          <p className="mb-2 text-sm text-neutral-400">Venue map</p>
+          <EventMap mode="display" value={event.location} />
+        </div>
+      )}
 
       {event.isRegistered && (
         <p className="mt-6 rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
