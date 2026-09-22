@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { loginRequest, registerRequest, meRequest } from '../services/auth.service';
+import { loginRequest, registerRequest, meRequest, updateProfileRequest } from '../services/auth.service';
 import { TOKEN_KEY } from '../services/api';
 
 const AuthContext = createContext(null);
@@ -59,8 +59,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const updateProfile = useCallback(async (payload) => {
+    const updatedUser = await updateProfileRequest(payload);
+    setUser(updatedUser);
+    return updatedUser;
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

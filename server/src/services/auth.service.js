@@ -34,3 +34,28 @@ export async function getUserById(id) {
   if (!user) throw new AppError('User not found', 404);
   return user;
 }
+
+// Email is deliberately excluded here — it's the login identifier (see
+// loginUser above) and this app has no email-verification flow, so
+// letting it change unverified would risk silently locking a user out.
+// Role is likewise never editable via this path.
+export async function updateUserProfile(userId, { name, profileImage }) {
+  const update = {};
+  if (name !== undefined) update.name = name;
+  if (profileImage !== undefined) update.profileImage = profileImage;
+
+  const user = await User.findByIdAndUpdate(userId, update, { new: true, runValidators: true });
+  if (!user) throw new AppError('User not found', 404);
+  return user;
+}
+
+export async function changeUserPassword(userId, { currentPassword, newPassword }) {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError('User not found', 404);
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) throw new AppError('Current password is incorrect', 401);
+
+  user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  await user.save();
+}

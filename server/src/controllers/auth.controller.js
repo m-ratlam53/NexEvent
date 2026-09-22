@@ -1,5 +1,11 @@
-import { validateSignup, validateLogin } from '../validators/auth.validators.js';
-import { registerUser, loginUser, getUserById } from '../services/auth.service.js';
+import { validateSignup, validateLogin, validateProfileUpdate, validatePasswordChange } from '../validators/auth.validators.js';
+import {
+  registerUser,
+  loginUser,
+  getUserById,
+  updateUserProfile,
+  changeUserPassword,
+} from '../services/auth.service.js';
 
 export async function signup(req, res, next) {
   try {
@@ -25,6 +31,26 @@ export async function me(req, res, next) {
   try {
     const user = await getUserById(req.user.id);
     res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateProfile(req, res, next) {
+  try {
+    validateProfileUpdate(req.body);
+    const user = await updateUserProfile(req.user.id, req.body);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function changePassword(req, res, next) {
+  try {
+    validatePasswordChange(req.body);
+    await changeUserPassword(req.user.id, req.body);
+    res.json({ message: 'Password updated' });
   } catch (err) {
     next(err);
   }

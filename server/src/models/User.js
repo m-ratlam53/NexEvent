@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema(
       enum: Object.values(USER_ROLES),
       required: true,
     },
+    // Data URI (base64), same storage pattern as Event.posterUrl — no file
+    // storage integration, matching the project's time constraints.
+    profileImage: { type: String, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: false } },
 );
