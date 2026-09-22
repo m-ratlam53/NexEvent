@@ -5,9 +5,9 @@ export default function EmptyState({ title = 'Nothing here yet', description }) 
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-white/60 py-16 text-center"
+      className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-white/60 py-16 text-center dark:border-neutral-700 dark:bg-neutral-900/40"
     >
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-400">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-400 dark:bg-brand-500/10 dark:text-brand-400">
         <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
           <path
             strokeLinecap="round"
@@ -16,8 +16,8 @@ export default function EmptyState({ title = 'Nothing here yet', description }) 
           />
         </svg>
       </div>
-      <p className="text-sm font-semibold text-neutral-900">{title}</p>
-      {description && <p className="mt-1 max-w-xs text-sm text-neutral-500">{description}</p>}
+      <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{title}</p>
+      {description && <p className="mt-1 max-w-xs text-sm text-neutral-500 dark:text-neutral-400">{description}</p>}
     </motion.div>
   );
 }

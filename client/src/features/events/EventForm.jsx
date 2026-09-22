@@ -10,7 +10,7 @@ function StepHeading({ step, title }) {
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-xs font-bold text-white">
         {step}
       </span>
-      <h2 className="font-display text-base font-semibold text-neutral-900">{title}</h2>
+      <h2 className="font-display text-base font-semibold text-neutral-900 dark:text-neutral-100">{title}</h2>
     </div>
   );
 }
@@ -31,13 +31,36 @@ const EMPTY_FORM = {
 
 const MAX_POSTER_BYTES = 5 * 1024 * 1024;
 
+// A new event defaults to the full map picker (the spec's preferred flow —
+// the organizer never types coordinates by hand); editing an existing
+// event with an address but no coordinates means it was previously saved
+// in manual mode, so that's carried over rather than silently switching it.
+function initialVenueMode(location) {
+  if (location?.latitude != null && location?.longitude != null) return 'map';
+  if (location?.address) return 'manual';
+  return 'map';
+}
+
 export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save' }) {
   const [form, setForm] = useState({ ...EMPTY_FORM, ...initialValues });
+  const [venueMode, setVenueMode] = useState(() => initialVenueMode(initialValues?.location));
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  // Switching to manual mode drops any coordinates from a previous map
+  // selection — manual mode always means address-only, never a stale
+  // lat/lng left over from before the toggle, which could otherwise drift
+  // out of sync with an edited address. The address text itself carries
+  // over either direction.
+  function handleVenueModeChange(next) {
+    setVenueMode(next);
+    if (next === 'manual') {
+      update('location', { address: form.location?.address || '', latitude: null, longitude: null });
+    }
   }
 
   function handlePosterChange(e) {
@@ -65,7 +88,11 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
     setError('');
 
     if (form.mode === 'onsite' && !form.location?.address) {
-      setError('Search for a venue and select a result before saving.');
+      setError(
+        venueMode === 'manual'
+          ? 'Enter a venue address before saving.'
+          : 'Search for a venue and select a result before saving.',
+      );
       return;
     }
 
@@ -79,6 +106,9 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
     }
   }
 
+  const SECTION_CLASS =
+    'space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-6';
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <AnimatePresence>
@@ -87,7 +117,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-600"
+            className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400"
           >
             <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 shrink-0 text-red-500">
               <path
@@ -102,7 +132,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
       </AnimatePresence>
 
       {/* Basic Details Section */}
-      <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+      <div className={SECTION_CLASS}>
         <StepHeading step={1} title="Event Overview" />
 
         <div>
@@ -145,14 +175,14 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
           <div>
             <label className={LABEL_CLASS}>Format / Mode *</label>
-            <div className="flex rounded-xl bg-neutral-100 p-1">
+            <div className="flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
               <button
                 type="button"
                 onClick={() => update('mode', 'onsite')}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all ${
                   form.mode === 'onsite'
-                    ? 'bg-white text-neutral-900 shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900'
+                    ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'
                 }`}
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-brand-500">
@@ -169,8 +199,8 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
                 onClick={() => update('mode', 'online')}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-all ${
                   form.mode === 'online'
-                    ? 'bg-white text-neutral-900 shadow-sm'
-                    : 'text-neutral-500 hover:text-neutral-900'
+                    ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'
                 }`}
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 text-brand-500">
@@ -188,7 +218,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
       </div>
 
       {/* Date & Time Section */}
-      <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+      <div className={SECTION_CLASS}>
         <StepHeading step={2} title="Date & Schedule" />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -232,24 +262,62 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6"
+            className={SECTION_CLASS}
           >
             <div>
               <StepHeading step={3} title="Venue Location" />
-              <p className="mt-0.5 pl-[34px] text-xs text-neutral-500">
-                Search and select the venue. A map marker will be shown to attendees.
+              <p className="mt-0.5 pl-[34px] text-xs text-neutral-500 dark:text-neutral-400">
+                {venueMode === 'map'
+                  ? 'Search and select the venue. A map marker will be shown to attendees.'
+                  : 'Enter the venue address as text — no map marker will be shown for this event.'}
               </p>
             </div>
-            <EventMap mode="picker" value={form.location} onChange={(location) => update('location', location)} />
+
+            <div className="flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
+              <button
+                type="button"
+                onClick={() => handleVenueModeChange('map')}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                  venueMode === 'map'
+                    ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+                }`}
+              >
+                Pick on map
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVenueModeChange('manual')}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                  venueMode === 'manual'
+                    ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                    : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+                }`}
+              >
+                Enter manually
+              </button>
+            </div>
+
+            <EventMap
+              key={venueMode}
+              mode="picker"
+              manual={venueMode === 'manual'}
+              value={form.location}
+              onChange={(location) => update('location', location)}
+            />
             {!form.location?.address && (
-              <p className="text-xs text-amber-600">Please select an address from the search results.</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                {venueMode === 'map'
+                  ? 'Please select an address from the search results.'
+                  : 'Please enter a venue address.'}
+              </p>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Capacity & Deadline Section */}
-      <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+      <div className={SECTION_CLASS}>
         <StepHeading step={4} title="Capacity & Registration Cutoff" />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -263,7 +331,9 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
               onChange={(e) => update('capacity', Number(e.target.value))}
               className={FIELD_CLASS}
             />
-            <p className="mt-1 text-xs text-neutral-400">Total spots available before waitlist activates.</p>
+            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+              Total spots available before waitlist activates.
+            </p>
           </div>
 
           <div>
@@ -274,28 +344,30 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
               onChange={(e) => update('registrationDeadline', e.target.value)}
               className={FIELD_CLASS}
             />
-            <p className="mt-1 text-xs text-neutral-400">Cutoff time before the event starts. Leave blank for no cutoff.</p>
+            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">
+              Cutoff time before the event starts. Leave blank for no cutoff.
+            </p>
           </div>
         </div>
       </div>
 
       {/* Poster Upload Section */}
-      <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+      <div className={SECTION_CLASS}>
         <StepHeading step={5} title="Event Poster" />
 
         {form.posterUrl ? (
-          <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-2 sm:p-3">
+          <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-2 dark:border-neutral-700 dark:bg-neutral-800 sm:p-3">
             <img
               src={form.posterUrl}
               alt="Poster preview"
               className="max-h-60 w-full rounded-xl object-cover"
             />
             <div className="mt-3 flex items-center justify-between px-1">
-              <span className="text-xs font-medium text-neutral-500">Poster attached</span>
+              <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Poster attached</span>
               <button
                 type="button"
                 onClick={() => update('posterUrl', '')}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-all hover:bg-red-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 shadow-sm transition-all hover:bg-red-50 dark:border-red-900/50 dark:bg-neutral-900 dark:text-red-400 dark:hover:bg-red-950/40"
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
                   <path
@@ -309,8 +381,8 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
             </div>
           </div>
         ) : (
-          <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-neutral-50/60 p-8 text-center transition-all hover:border-brand-300 hover:bg-brand-50/20">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 shadow-sm">
+          <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-neutral-50/60 p-8 text-center transition-all hover:border-brand-300 hover:bg-brand-50/20 dark:border-neutral-700 dark:bg-neutral-800/40 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600 shadow-sm dark:bg-brand-500/15 dark:text-brand-400">
               <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
                 <path
                   strokeLinecap="round"
@@ -319,8 +391,8 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
                 />
               </svg>
             </div>
-            <p className="mt-3 text-sm font-semibold text-neutral-900">Click to upload poster image</p>
-            <p className="mt-1 text-xs text-neutral-400">PNG, JPG or WebP up to 5MB</p>
+            <p className="mt-3 text-sm font-semibold text-neutral-900 dark:text-neutral-100">Click to upload poster image</p>
+            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">PNG, JPG or WebP up to 5MB</p>
             <input
               type="file"
               accept="image/*"

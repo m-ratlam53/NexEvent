@@ -59,8 +59,8 @@ export default function Explore() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <PageFade>
-        <h1 className="font-display text-3xl font-bold text-neutral-900">Explore Events</h1>
-        <p className="mt-1 text-sm text-neutral-500">Find what's happening and reserve your seat.</p>
+        <h1 className="font-display text-3xl font-bold text-neutral-900 dark:text-neutral-100">Explore Events</h1>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Find what's happening and reserve your seat.</p>
       </PageFade>
 
       <div className="mb-8 mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -69,15 +69,15 @@ export default function Explore() {
       </div>
 
       {!search && user?.role === 'participant' && recommendedStatus === 'ready' && recommended.length > 0 && (
-        <div className="mb-10">
-          <h2 className="font-display mb-3 flex items-center gap-2 text-lg font-bold text-neutral-900">
+        <div className="mb-10 rounded-2xl border-l-4 border-brand-500 bg-brand-50/40 p-5 dark:border-brand-500 dark:bg-brand-500/5">
+          <h2 className="font-display mb-3 flex items-center gap-2 text-lg font-bold text-neutral-900 dark:text-neutral-100">
             <span className="bg-gradient-to-r from-brand-600 to-fuchsia-500 bg-clip-text text-transparent">✦</span>
             Recommended for you
           </h2>
           <RevealGroup className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recommended.map((event) => (
               <RevealItem key={event._id}>
-                <EventCard event={event} />
+                <EventCard event={event} recommended reason={event.recommendationReason} />
               </RevealItem>
             ))}
           </RevealGroup>

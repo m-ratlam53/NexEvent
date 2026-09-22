@@ -18,7 +18,7 @@ export default function CreateEvent() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-neutral-900"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
       >
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
           <path
@@ -32,8 +32,8 @@ export default function CreateEvent() {
 
       <PageFade delay={0.05}>
         <div className="mb-8 mt-3">
-          <h1 className="font-display text-3xl font-bold text-neutral-900">Create Event</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h1 className="font-display text-3xl font-bold text-neutral-900 dark:text-neutral-100">Create Event</h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
             Fill in event details to save a new draft. You can review and publish whenever you're ready.
           </p>
         </div>

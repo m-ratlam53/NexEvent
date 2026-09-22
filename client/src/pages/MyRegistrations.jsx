@@ -73,23 +73,27 @@ export default function MyRegistrations() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <PageFade>
-        <h1 className="font-display text-3xl font-bold text-neutral-900">My Registrations</h1>
-        <p className="mt-1 text-sm text-neutral-500">Events you're registered for or waitlisted on.</p>
+        <h1 className="font-display text-3xl font-bold text-neutral-900 dark:text-neutral-100">My Registrations</h1>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Events you're registered for or waitlisted on.</p>
       </PageFade>
 
-      <div className="mb-6 mt-6 flex flex-wrap gap-1 rounded-xl bg-neutral-100 p-1">
+      <div className="mb-6 mt-6 flex flex-wrap gap-1 rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
         {Object.keys(tabs).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
-              activeTab === tab ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'
+              activeTab === tab
+                ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100'
             }`}
           >
             {tab}
             <span
               className={`rounded-full px-1.5 py-0.5 text-xs ${
-                activeTab === tab ? 'bg-brand-50 text-brand-700' : 'bg-neutral-200 text-neutral-500'
+                activeTab === tab
+                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
+                  : 'bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400'
               }`}
             >
               {tabs[tab].length}
@@ -98,7 +102,9 @@ export default function MyRegistrations() {
         ))}
       </div>
 
-      {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">{error}</p>
+      )}
 
       {visible.length === 0 && (
         <EmptyState
@@ -111,10 +117,10 @@ export default function MyRegistrations() {
         <RevealGroup className="space-y-3" stagger={0.05}>
           {visible.map((reg) => (
             <RevealItem key={reg._id}>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated dark:border-neutral-800 dark:bg-neutral-900">
                 <Link to={`/events/${reg.event?._id}`} className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-neutral-900">{reg.event?.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">{reg.event?.name}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                     {reg.event ? new Date(reg.event.date).toLocaleDateString() : ''} · by{' '}
                     {reg.event?.organizer?.name}
                   </p>
@@ -132,7 +138,7 @@ export default function MyRegistrations() {
                   {(reg.status === 'registered' || reg.status === 'waitlisted') && (
                     <button
                       onClick={() => setPendingCancelId(reg._id)}
-                      className="text-sm font-medium text-red-600 hover:underline"
+                      className="text-sm font-medium text-red-600 hover:underline dark:text-red-400"
                     >
                       {reg.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel'}
                     </button>

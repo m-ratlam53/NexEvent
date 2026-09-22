@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (toggled by ThemeContext) instead of Tailwind's
+   default media-query strategy, so light/dark/system can be a persisted
+   user choice rather than always following the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Lexend", "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -31,6 +36,11 @@ body {
   background-color: #fafafa;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease;
+}
+
+.dark body {
+  background-color: #0a0a0a;
 }
 
 h1,
@@ -58,6 +68,12 @@ h3,
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  background: #a78bfa;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #a78bfa;
 }
 

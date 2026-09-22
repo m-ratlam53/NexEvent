@@ -11,6 +11,19 @@
       rel="stylesheet"
     />
     <title>NexEvent</title>
+    <script>
+      // Applied before first paint to avoid a flash of the wrong theme —
+      // ThemeContext (src/context/ThemeContext.jsx) re-derives and owns
+      // this after mount; this inline copy only exists for the pre-mount
+      // window React can't cover.
+      (function () {
+        try {
+          var mode = localStorage.getItem('nexevent_theme') || 'system';
+          var isDark = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', isDark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

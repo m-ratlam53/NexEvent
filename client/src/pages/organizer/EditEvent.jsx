@@ -78,7 +78,7 @@ export default function EditEvent() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-neutral-900"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
       >
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
           <path
@@ -94,10 +94,10 @@ export default function EditEvent() {
         <div className="mb-8 mt-3 flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="font-display text-3xl font-bold text-neutral-900">Edit Event</h1>
+              <h1 className="font-display text-3xl font-bold text-neutral-900 dark:text-neutral-100">Edit Event</h1>
               <EventStatus status={event.displayStatus || event.status} />
             </div>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
               Update event details, timing, venue, or capacity.
             </p>
           </div>
@@ -116,7 +116,7 @@ export default function EditEvent() {
         </div>
 
         {actionError && (
-          <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-600">
+          <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400">
             <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 shrink-0 text-red-500">
               <path
                 fillRule="evenodd"

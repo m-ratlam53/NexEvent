@@ -1,7 +1,7 @@
 export default function ErrorState({ message = 'Something went wrong.' }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50/40 py-16 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-500">
+    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50/40 py-16 text-center dark:border-red-900/40 dark:bg-red-950/20">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-500/15 dark:text-red-400">
         <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
           <path
             strokeLinecap="round"
@@ -10,7 +10,7 @@ export default function ErrorState({ message = 'Something went wrong.' }) {
           />
         </svg>
       </div>
-      <p className="text-sm font-semibold text-red-600">{message}</p>
+      <p className="text-sm font-semibold text-red-600 dark:text-red-400">{message}</p>
     </div>
   );
 }

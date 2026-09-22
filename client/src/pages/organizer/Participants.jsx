@@ -9,14 +9,14 @@ import PageFade, { RevealGroup, RevealItem } from '../../components/motion/Revea
 
 function ParticipantRow({ reg, statusLabel }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex items-center gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-xs font-semibold text-white">
           {reg.participant?.name?.[0]?.toUpperCase()}
         </span>
         <div>
-          <p className="text-sm font-semibold text-neutral-900">{reg.participant?.name}</p>
-          <p className="text-xs text-neutral-500">{reg.participant?.email}</p>
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">{reg.participant?.name}</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">{reg.participant?.email}</p>
         </div>
       </div>
       <EventStatus status={statusLabel} />
@@ -60,19 +60,19 @@ export default function Participants() {
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+        className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
       >
         ← Back to Dashboard
       </Link>
       <PageFade delay={0.05}>
-        <h1 className="font-display mb-1 mt-3 text-2xl font-bold text-neutral-900">{event.name}</h1>
-        <p className="mb-6 text-sm text-neutral-500">
+        <h1 className="font-display mb-1 mt-3 text-2xl font-bold text-neutral-900 dark:text-neutral-100">{event.name}</h1>
+        <p className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
           {registered.length} registered of {event.capacity} seats
           {waitlisted.length > 0 && ` · ${waitlisted.length} waitlisted`}
         </p>
       </PageFade>
 
-      <h2 className="mb-2 text-sm font-semibold text-neutral-700">Registered</h2>
+      <h2 className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Registered</h2>
       {registered.length === 0 ? (
         <div className="mb-8">
           <EmptyState title="No one registered yet" />
@@ -89,7 +89,7 @@ export default function Participants() {
 
       {waitlisted.length > 0 && (
         <>
-          <h2 className="mb-2 text-sm font-semibold text-neutral-700">Waitlisted</h2>
+          <h2 className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Waitlisted</h2>
           <RevealGroup className="space-y-2.5" stagger={0.04}>
             {waitlisted.map((reg) => (
               <RevealItem key={reg._id}>

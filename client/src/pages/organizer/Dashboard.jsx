@@ -84,8 +84,8 @@ export default function Dashboard() {
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
         <PageFade>
-          <h1 className="font-display text-3xl font-bold text-neutral-900">Organizer Dashboard</h1>
-          <p className="mt-1 text-sm text-neutral-500">Manage your events and track performance.</p>
+          <h1 className="font-display text-3xl font-bold text-neutral-900 dark:text-neutral-100">Organizer Dashboard</h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Manage your events and track performance.</p>
         </PageFade>
         <Link to="/organizer/events/new" className={BUTTON_PRIMARY}>
           + New Event
@@ -113,24 +113,32 @@ export default function Dashboard() {
         </RevealItem>
       </RevealGroup>
 
-      {actionError && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{actionError}</p>}
+      {actionError && (
+        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400">
+          {actionError}
+        </p>
+      )}
 
       {events.length === 0 ? (
         <EmptyState title="No events yet" description="Create your first event to get started." />
       ) : (
-        <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-neutral-100 p-1">
+        <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
           {Object.keys(tabs).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
-                activeTab === tab ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'
+                activeTab === tab
+                  ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                  : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-100'
               }`}
             >
               {tab}
               <span
                 className={`rounded-full px-1.5 py-0.5 text-xs ${
-                  activeTab === tab ? 'bg-brand-50 text-brand-700' : 'bg-neutral-200 text-neutral-500'
+                  activeTab === tab
+                    ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
+                    : 'bg-neutral-200 text-neutral-500 dark:bg-neutral-700 dark:text-neutral-400'
                 }`}
               >
                 {tabs[tab].length}
@@ -148,10 +156,10 @@ export default function Dashboard() {
         <RevealGroup className="space-y-2.5" stagger={0.04}>
           {visibleEvents.map((event) => (
             <RevealItem key={event._id}>
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">{event.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">{event.name}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                     {new Date(event.date).toLocaleDateString()} · {event.registeredCount}/{event.capacity}{' '}
                     registered
                     {event.waitlistedCount > 0 && ` · ${event.waitlistedCount} waitlisted`}
@@ -160,37 +168,43 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <EventStatus status={event.displayStatus} />
                   <div className="flex flex-wrap gap-3 text-xs font-medium">
-                    <Link to={`/events/${event._id}`} className="text-neutral-600 hover:text-neutral-900">
+                    <Link
+                      to={`/events/${event._id}`}
+                      className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                    >
                       View
                     </Link>
                     <Link
                       to={`/organizer/events/${event._id}/edit`}
-                      className="text-neutral-600 hover:text-neutral-900"
+                      className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
                     >
                       Edit
                     </Link>
                     {event.status === 'draft' && (
                       <button
                         onClick={() => handlePublish(event._id)}
-                        className="font-semibold text-brand-600 hover:text-brand-700"
+                        className="font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                       >
                         Publish
                       </button>
                     )}
                     {event.status !== 'cancelled' && (
-                      <button onClick={() => setPendingCancelId(event._id)} className="text-red-600 hover:underline">
+                      <button
+                        onClick={() => setPendingCancelId(event._id)}
+                        className="text-red-600 hover:underline dark:text-red-400"
+                      >
                         Cancel
                       </button>
                     )}
                     <Link
                       to={`/organizer/events/${event._id}/participants`}
-                      className="text-neutral-600 hover:text-neutral-900"
+                      className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
                     >
                       Participants
                     </Link>
                     <Link
                       to={`/organizer/events/${event._id}/analytics`}
-                      className="text-neutral-600 hover:text-neutral-900"
+                      className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
                     >
                       Analytics
                     </Link>

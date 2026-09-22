@@ -56,12 +56,15 @@ export default function Landing() {
   if (user) return <Navigate to={user.role === 'organizer' ? '/dashboard' : '/explore'} replace />;
 
   return (
-    <div className="min-h-screen overflow-hidden bg-neutral-50">
-      <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/70 backdrop-blur-lg">
+    <div className="min-h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+      <header className="sticky top-0 z-40 border-b border-neutral-200/70 bg-white/70 backdrop-blur-lg dark:border-neutral-800 dark:bg-neutral-900/70">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <span className="font-display text-lg font-bold text-neutral-900">NexEvent</span>
+          <span className="font-display text-lg font-bold text-neutral-900 dark:text-neutral-100">NexEvent</span>
           <div className="flex items-center gap-3 text-sm">
-            <Link to="/login" className="font-medium text-neutral-600 transition-colors hover:text-neutral-900">
+            <Link
+              to="/login"
+              className="font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
               Log in
             </Link>
             <Link
@@ -84,18 +87,18 @@ export default function Landing() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mx-auto max-w-4xl px-4 pb-20 pt-24 text-center sm:pt-32"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
             Event discovery & registration, reimagined
           </span>
-          <h1 className="font-display mt-6 text-5xl font-extrabold tracking-tight text-neutral-900 sm:text-6xl">
+          <h1 className="font-display mt-6 text-5xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100 sm:text-6xl">
             Discover events.
             <br />
             <span className="bg-gradient-to-r from-brand-600 via-fuchsia-500 to-brand-500 bg-clip-text text-transparent">
               Register in seconds.
             </span>
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-neutral-500">
+          <p className="mx-auto mt-5 max-w-xl text-lg text-neutral-500 dark:text-neutral-400">
             NexEvent connects organizers and participants — create and manage events, or find what's happening
             near you and reserve your seat.
           </p>
@@ -108,25 +111,25 @@ export default function Landing() {
             </Link>
             <Link
               to="/login"
-              className="rounded-xl border border-neutral-200 bg-white/80 px-7 py-3.5 text-sm font-semibold text-neutral-700 shadow-sm backdrop-blur transition-all hover:border-neutral-300 hover:bg-white active:scale-95"
+              className="rounded-xl border border-neutral-200 bg-white/80 px-7 py-3.5 text-sm font-semibold text-neutral-700 shadow-sm backdrop-blur transition-all hover:border-neutral-300 hover:bg-white active:scale-95 dark:border-neutral-700 dark:bg-neutral-900/80 dark:text-neutral-300 dark:hover:border-neutral-600 dark:hover:bg-neutral-900"
             >
               Log in
             </Link>
           </div>
         </motion.div>
 
-        <section className="relative border-t border-neutral-200/70 bg-white/60 py-20 backdrop-blur-sm">
+        <section className="relative border-t border-neutral-200/70 bg-white/60 py-20 backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900/60">
           <RevealGroup className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 sm:grid-cols-3">
             {FEATURES.map((feature) => (
               <RevealItem key={feature.title}>
-                <TiltCard className="h-full rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-elevated">
+                <TiltCard className="h-full rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-elevated dark:border-neutral-800 dark:bg-neutral-900">
                   <div
                     className={`inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} text-white shadow-elevated`}
                   >
                     {feature.icon}
                   </div>
-                  <h3 className="font-display mt-4 text-sm font-bold text-neutral-900">{feature.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-500">{feature.description}</p>
+                  <h3 className="font-display mt-4 text-sm font-bold text-neutral-900 dark:text-neutral-100">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">{feature.description}</p>
                 </TiltCard>
               </RevealItem>
             ))}

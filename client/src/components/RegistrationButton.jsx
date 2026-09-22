@@ -61,7 +61,7 @@ export default function RegistrationButton({ event, onChange }) {
         <button onClick={() => setConfirmOpen(true)} disabled={submitting} className={BUTTON_DANGER}>
           {event.isWaitlisted ? 'Leave waitlist' : 'Cancel registration'}
         </button>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         <ConfirmDialog
           open={confirmOpen}
           title={event.isWaitlisted ? 'Leave the waitlist?' : 'Cancel your registration?'}
@@ -88,14 +88,16 @@ export default function RegistrationButton({ event, onChange }) {
       <button onClick={handleRegister} disabled={blocked || submitting} className={BUTTON_PRIMARY}>
         {submitting ? 'Submitting…' : isFull ? 'Join waitlist' : 'Register'}
       </button>
-      {deadlinePassed && <p className="mt-2 text-xs text-neutral-500">The registration deadline has passed.</p>}
+      {deadlinePassed && (
+        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">The registration deadline has passed.</p>
+      )}
       {blocked && !deadlinePassed && (
-        <p className="mt-2 text-xs text-neutral-500">Registration is not open for this event.</p>
+        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Registration is not open for this event.</p>
       )}
       {isFull && !blocked && (
-        <p className="mt-2 text-xs text-neutral-500">This event is full — you'll join the waitlist.</p>
+        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">This event is full — you'll join the waitlist.</p>
       )}
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }

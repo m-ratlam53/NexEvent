@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapLibreMap, Marker, NavigationControl, config } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useTheme } from '../context/ThemeContext';
 
 // maplibre-gl resolves its tile-parsing Web Worker relative to its own
 // module URL at runtime — that breaks once the app is bundled into a single
@@ -12,9 +13,11 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 config.WORKER_URL = '/maplibre-gl-worker.mjs';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_API_KEY;
-const STYLE_URL = MAPTILER_KEY
-  ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
-  : null;
+
+function styleUrl(isDark) {
+  if (!MAPTILER_KEY) return null;
+  return `https://api.maptiler.com/maps/streets-v2${isDark ? '-dark' : ''}/style.json?key=${MAPTILER_KEY}`;
+}
 
 function buildDirectionsUrl(lat, lng) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -37,9 +40,13 @@ async function reverseGeocode(lng, lat) {
  * `mode="display"` (used on Event Details) just shows a marker at a fixed
  * location plus a Get Directions link. Degrades gracefully to an
  * address-only view when VITE_MAPTILER_API_KEY isn't configured, rather
- * than failing to render.
+ * than failing to render. `manual` (picker mode only) is the organizer's own
+ * deliberate "Enter manually" choice from EventForm's venue-mode toggle —
+ * same plain-address UI as the no-key fallback, just without the "why"
+ * explanation, and it never touches geocoding.
  */
-export default function EventMap({ mode = 'display', value, onChange }) {
+export default function EventMap({ mode = 'display', value, onChange, manual = false }) {
+  const { isDark } = useTheme();
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markerRef = useRef(null);
@@ -98,12 +105,12 @@ export default function EventMap({ mode = 'display', value, onChange }) {
   }, [query, mode]);
 
   useEffect(() => {
-    if (!STYLE_URL || !containerRef.current || mapRef.current) return undefined;
+    if (!MAPTILER_KEY || !containerRef.current || mapRef.current) return undefined;
 
     const center = selected ? [selected.longitude, selected.latitude] : [0, 20];
     const zoom = selected ? 14 : 1.5;
 
-    mapRef.current = new MapLibreMap({ container: containerRef.current, style: STYLE_URL, center, zoom });
+    mapRef.current = new MapLibreMap({ container: containerRef.current, style: styleUrl(isDark), center, zoom });
     mapRef.current.addControl(new NavigationControl(), 'top-right');
 
     return () => {
@@ -112,6 +119,13 @@ export default function EventMap({ mode = 'display', value, onChange }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Live-swap the tile style when the theme toggles while this map is
+  // mounted — markers are DOM overlays independent of the style/sprite, so
+  // they survive setStyle() without needing to be re-added.
+  useEffect(() => {
+    mapRef.current?.setStyle(styleUrl(isDark));
+  }, [isDark]);
 
   useEffect(() => {
     if (!mapRef.current || !selected) return;
@@ -173,30 +187,34 @@ export default function EventMap({ mode = 'display', value, onChange }) {
   }
 
   const INPUT_CLASS =
-    'w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-sm transition-all placeholder:text-neutral-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15';
+    'w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-sm transition-all placeholder:text-neutral-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/20';
+
+  if (mode === 'picker' && (manual || !MAPTILER_KEY)) {
+    return (
+      <div className="space-y-2">
+        <input
+          value={value?.address || ''}
+          onChange={(e) => onChange?.({ address: e.target.value, latitude: null, longitude: null })}
+          placeholder="Venue address"
+          className={INPUT_CLASS}
+        />
+        {!MAPTILER_KEY && (
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+            Map-based venue search is unavailable (no{' '}
+            <code className="font-mono text-neutral-600 dark:text-neutral-400">VITE_MAPTILER_API_KEY</code> configured) — plain
+            text address for now.
+          </p>
+        )}
+      </div>
+    );
+  }
 
   if (!MAPTILER_KEY) {
-    if (mode === 'picker') {
-      return (
-        <div className="space-y-2">
-          <input
-            value={value?.address || ''}
-            onChange={(e) => onChange?.({ address: e.target.value, latitude: null, longitude: null })}
-            placeholder="Venue address"
-            className={INPUT_CLASS}
-          />
-          <p className="text-xs text-neutral-400">
-            Map-based venue search is unavailable (no <code className="font-mono text-neutral-600">VITE_MAPTILER_API_KEY</code>{' '}
-            configured) — plain text address for now.
-          </p>
-        </div>
-      );
-    }
     return (
-      <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 p-4 text-sm text-neutral-500">
-        Map unavailable — set <code className="font-mono text-xs text-neutral-700">VITE_MAPTILER_API_KEY</code> to enable the venue
-        map.
-        {value?.address && <p className="mt-2 font-medium text-neutral-800">{value.address}</p>}
+      <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 p-4 text-sm text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900/50 dark:text-neutral-400">
+        Map unavailable — set <code className="font-mono text-xs text-neutral-700 dark:text-neutral-300">VITE_MAPTILER_API_KEY</code>{' '}
+        to enable the venue map.
+        {value?.address && <p className="mt-2 font-medium text-neutral-800 dark:text-neutral-200">{value.address}</p>}
       </div>
     );
   }
@@ -224,15 +242,15 @@ export default function EventMap({ mode = 'display', value, onChange }) {
               />
             </svg>
           </div>
-          {searching && <p className="mt-1 text-xs text-brand-600">Searching venue…</p>}
+          {searching && <p className="mt-1 text-xs text-brand-600 dark:text-brand-400">Searching venue…</p>}
           {results.length > 0 && (
-            <ul className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-neutral-200/80 bg-white/95 py-1 shadow-elevated backdrop-blur-md">
+            <ul className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-neutral-200/80 bg-white/95 py-1 shadow-elevated backdrop-blur-md dark:border-neutral-700 dark:bg-neutral-800/95">
               {results.map((feature) => (
                 <li key={feature.id}>
                   <button
                     type="button"
                     onClick={() => handleSelectResult(feature)}
-                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-neutral-800 transition-colors hover:bg-brand-50 hover:text-brand-900"
+                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-neutral-800 transition-colors hover:bg-brand-50 hover:text-brand-900 dark:text-neutral-200 dark:hover:bg-brand-500/15 dark:hover:text-brand-300"
                   >
                     <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-brand-500">
                       <path
@@ -250,10 +268,15 @@ export default function EventMap({ mode = 'display', value, onChange }) {
         </div>
       )}
 
-      <div ref={containerRef} className="h-64 w-full overflow-hidden rounded-2xl border border-neutral-200/80 shadow-sm" />
+      <div
+        ref={containerRef}
+        className="h-64 w-full overflow-hidden rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700"
+      />
 
       {mode === 'picker' && selected && (
-        <p className="text-xs text-neutral-400">Not quite right? Click the map or drag the pin to set the exact spot.</p>
+        <p className="text-xs text-neutral-400 dark:text-neutral-500">
+          Not quite right? Click the map or drag the pin to set the exact spot.
+        </p>
       )}
 
       {mode === 'display' && selected && (
@@ -261,7 +284,7 @@ export default function EventMap({ mode = 'display', value, onChange }) {
           href={buildDirectionsUrl(selected.latitude, selected.longitude)}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-all hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-700"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-all hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-700 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/10 dark:hover:text-brand-400"
         >
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-brand-500">
             <path

@@ -31,12 +31,12 @@ function formatDateTime(dateStr) {
 
 function InfoCard({ icon, label, children }) {
   return (
-    <div className="rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-neutral-400">
+    <div className="rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="flex items-center gap-2 text-neutral-400 dark:text-neutral-500">
         {icon}
         <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
       </div>
-      <div className="mt-2 text-sm text-neutral-900">{children}</div>
+      <div className="mt-2 text-sm text-neutral-900 dark:text-neutral-100">{children}</div>
     </div>
   );
 }
@@ -95,7 +95,7 @@ export default function EventDetails() {
     <div className="mx-auto max-w-5xl px-4 py-10">
       <Link
         to="/explore"
-        className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+        className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
       >
         ← Back to Explore
       </Link>
@@ -105,7 +105,7 @@ export default function EventDetails() {
         <div className="lg:col-span-2">
           <PageFade delay={0.05}>
             {event.posterUrl ? (
-              <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-neutral-200/80 shadow-elevated sm:h-72">
+              <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-neutral-200/80 shadow-elevated dark:border-neutral-800 sm:h-72">
                 <img src={event.posterUrl} alt="" className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5">
@@ -123,16 +123,18 @@ export default function EventDetails() {
             ) : (
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
+                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
                     {event.category}
                   </span>
-                  <h1 className="font-display mt-2 text-2xl font-bold text-neutral-900 sm:text-3xl">{event.name}</h1>
+                  <h1 className="font-display mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100 sm:text-3xl">
+                    {event.name}
+                  </h1>
                 </div>
                 <EventStatus status={event.displayStatus} />
               </div>
             )}
-            <p className="mt-3 text-sm text-neutral-500">
-              Organized by <span className="font-medium text-neutral-700">{event.organizer?.name}</span>
+            <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+              Organized by <span className="font-medium text-neutral-700 dark:text-neutral-300">{event.organizer?.name}</span>
             </p>
           </PageFade>
 
@@ -141,7 +143,7 @@ export default function EventDetails() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
-              className="mt-5 whitespace-pre-line text-neutral-600"
+              className="mt-5 whitespace-pre-line text-neutral-600 dark:text-neutral-400"
             >
               {event.description}
             </motion.p>
@@ -149,7 +151,7 @@ export default function EventDetails() {
 
           {hasMap && (
             <div className="mt-6">
-              <p className="mb-2 text-sm font-semibold text-neutral-700">Venue map</p>
+              <p className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Venue map</p>
               <EventMap mode="display" value={event.location} />
             </div>
           )}
@@ -161,7 +163,7 @@ export default function EventDetails() {
             <motion.p
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200/70"
+              className="mb-4 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30"
             >
               You're registered for this event.
             </motion.p>
@@ -170,7 +172,7 @@ export default function EventDetails() {
             <motion.p
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm font-medium text-amber-700 ring-1 ring-inset ring-amber-200/70"
+              className="mb-4 rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm font-medium text-amber-700 ring-1 ring-inset ring-amber-200/70 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/30"
             >
               You're on the waitlist — position #{event.myWaitlistPosition}. You'll be registered automatically if
               a seat opens up.

@@ -22,7 +22,7 @@ export default function EventSearch({ value, onChange, placeholder = 'Search eve
         fill="none"
         strokeWidth={1.5}
         stroke="currentColor"
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500"
       >
         <path
           strokeLinecap="round"
@@ -35,7 +35,7 @@ export default function EventSearch({ value, onChange, placeholder = 'Search eve
         value={term}
         onChange={(e) => setTerm(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-9 pr-3.5 text-sm shadow-sm transition-all placeholder:text-neutral-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+        className="w-full rounded-xl border border-neutral-200 bg-white py-2.5 pl-9 pr-3.5 text-sm shadow-sm transition-all placeholder:text-neutral-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500"
       />
     </div>
   );

@@ -7,7 +7,7 @@ const SORT_OPTIONS = [
 ];
 
 const SELECT_CLASS =
-  'rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm shadow-sm transition-all focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15';
+  'rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm shadow-sm transition-all focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100';
 
 export default function EventFilters({ filters, onChange }) {
   function update(field, value) {
@@ -45,7 +45,7 @@ export default function EventFilters({ filters, onChange }) {
       {hasActiveFilters && (
         <button
           onClick={() => onChange({ category: '', date: '', sort: 'date' })}
-          className="rounded-full px-3 py-1.5 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+          className="rounded-full px-3 py-1.5 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
         >
           Clear filters
         </button>

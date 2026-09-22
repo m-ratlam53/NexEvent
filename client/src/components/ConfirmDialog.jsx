@@ -28,10 +28,10 @@ export default function ConfirmDialog({
             exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-elevated-lg"
+            className="w-full max-w-sm rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-elevated-lg dark:border-neutral-800 dark:bg-neutral-900"
           >
-            <h2 className="font-display text-base font-bold text-neutral-900">{title}</h2>
-            {description && <p className="mt-2 text-sm text-neutral-500">{description}</p>}
+            <h2 className="font-display text-base font-bold text-neutral-900 dark:text-neutral-100">{title}</h2>
+            {description && <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{description}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={onCancel} className={BUTTON_SECONDARY}>
                 {cancelLabel}

@@ -42,7 +42,7 @@ export default function Login() {
   }
 
   return (
-    <div className="bg-mesh relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-50 px-4">
+    <div className="bg-mesh relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-50 px-4 dark:bg-neutral-950">
       <div className="bg-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_50%_50%_at_50%_40%,black_30%,transparent_100%)]" />
       <motion.div
         initial={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -50,19 +50,19 @@ export default function Login() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-sm"
       >
-        <Link to="/" className="font-display mb-6 block text-center text-lg font-bold text-neutral-900">
+        <Link to="/" className="font-display mb-6 block text-center text-lg font-bold text-neutral-900 dark:text-neutral-100">
           NexEvent
         </Link>
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-8 shadow-elevated-lg backdrop-blur"
+          className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-8 shadow-elevated-lg backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/90"
         >
-          <h1 className="font-display text-xl font-bold text-neutral-900">Log in to NexEvent</h1>
+          <h1 className="font-display text-xl font-bold text-neutral-900 dark:text-neutral-100">Log in to NexEvent</h1>
           {error && (
             <motion.p
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600"
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400"
             >
               {error}
             </motion.p>
@@ -89,9 +89,9 @@ export default function Login() {
           <button type="submit" disabled={submitting} className={`${BUTTON_PRIMARY} w-full`}>
             {submitting ? 'Logging in…' : 'Log in'}
           </button>
-          <p className="text-center text-sm text-neutral-500">
+          <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
             No account?{' '}
-            <Link to="/signup" className="font-medium text-brand-600 hover:text-brand-700">
+            <Link to="/signup" className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
               Sign up
             </Link>
           </p>

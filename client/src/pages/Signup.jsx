@@ -27,7 +27,7 @@ export default function Signup() {
   }
 
   return (
-    <div className="bg-mesh relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-50 px-4 py-10">
+    <div className="bg-mesh relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-50 px-4 py-10 dark:bg-neutral-950">
       <div className="bg-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_50%_50%_at_50%_40%,black_30%,transparent_100%)]" />
       <motion.div
         initial={{ opacity: 0, y: 18, scale: 0.98 }}
@@ -35,19 +35,19 @@ export default function Signup() {
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-sm"
       >
-        <Link to="/" className="font-display mb-6 block text-center text-lg font-bold text-neutral-900">
+        <Link to="/" className="font-display mb-6 block text-center text-lg font-bold text-neutral-900 dark:text-neutral-100">
           NexEvent
         </Link>
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-8 shadow-elevated-lg backdrop-blur"
+          className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white/90 p-8 shadow-elevated-lg backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/90"
         >
-          <h1 className="font-display text-xl font-bold text-neutral-900">Create your NexEvent account</h1>
+          <h1 className="font-display text-xl font-bold text-neutral-900 dark:text-neutral-100">Create your NexEvent account</h1>
           {error && (
             <motion.p
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600"
+              className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-400"
             >
               {error}
             </motion.p>
@@ -79,7 +79,7 @@ export default function Signup() {
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className={FIELD_CLASS}
             />
-            <p className="mt-1 text-xs text-neutral-400">At least 8 characters, with letters and numbers.</p>
+            <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">At least 8 characters, with letters and numbers.</p>
           </div>
           <div>
             <label className={LABEL_CLASS}>I am a</label>
@@ -94,18 +94,20 @@ export default function Signup() {
                   onClick={() => setForm({ ...form, role: option.value })}
                   className={`rounded-xl border p-3 text-left transition-all ${
                     form.role === option.value
-                      ? 'border-brand-400 bg-brand-50 shadow-sm ring-1 ring-brand-400'
-                      : 'border-neutral-200 bg-white hover:border-neutral-300'
+                      ? 'border-brand-400 bg-brand-50 shadow-sm ring-1 ring-brand-400 dark:bg-brand-500/15 dark:ring-brand-500'
+                      : 'border-neutral-200 bg-white hover:border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-neutral-600'
                   }`}
                 >
                   <p
                     className={`text-sm font-semibold ${
-                      form.role === option.value ? 'text-brand-700' : 'text-neutral-900'
+                      form.role === option.value
+                        ? 'text-brand-700 dark:text-brand-300'
+                        : 'text-neutral-900 dark:text-neutral-100'
                     }`}
                   >
                     {option.label}
                   </p>
-                  <p className="mt-0.5 text-xs text-neutral-500">{option.hint}</p>
+                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{option.hint}</p>
                 </button>
               ))}
             </div>
@@ -113,9 +115,9 @@ export default function Signup() {
           <button type="submit" disabled={submitting} className={`${BUTTON_PRIMARY} w-full`}>
             {submitting ? 'Creating account…' : 'Sign up'}
           </button>
-          <p className="text-center text-sm text-neutral-500">
+          <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-brand-600 hover:text-brand-700">
+            <Link to="/login" className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300">
               Log in
             </Link>
           </p>
