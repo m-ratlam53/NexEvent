@@ -343,14 +343,50 @@ absent, rather than skipping the feature or faking credentials.
   `location: {address, latitude: null, longitude: null}` (exactly what the
   no-key fallback UI sends) — 201, validator and schema both accept it.
 
-**Not independently verified — genuinely untested, flagged explicitly:**
-the actual MapLibre map render, live MapTiler geocoding search/results, and
-marker placement have **not** been visually verified, because this
-environment has neither a MapTiler key nor a browser tool. The component
-logic was reviewed carefully and the module loads/transforms without
-error, but "compiles and the fallback path works" is not the same claim as
-"the map renders correctly and geocoding returns good results" — that
-still needs a real key and a manual pass in a browser before this feature
-is demo-ready. Same no-browser caveat as Phases 3–7 otherwise applies.
+### Update — real MapTiler key provided, live-browser verification performed
+
+The user supplied a real MapTiler key (`MAPTILER_API_KEY` / `VITE_MAPTILER_API_KEY`,
+set in both `server/.env` and `client/.env`, both git-ignored). With a real
+key available, a headless Chrome + Puppeteer harness was set up (no browser
+tool is provided in this environment, so `puppeteer-core` was installed
+ad hoc in the scratchpad directory, pointed at the machine's existing Chrome
+install) to actually click through the app instead of only reasoning about
+the code.
+
+**Bug found and fixed:** the Event Details map rendered the base style
+(background color, zoom controls, attribution) but no actual roads/tiles —
+a real bug, not a fallback/config issue. `maplibre-gl` resolves its
+tile-parsing Web Worker relative to its own module's `import.meta.url` at
+runtime; once Vite/Rolldown bundles everything into one `index-*.js` file,
+that sibling file no longer exists, so the worker silently fails to load
+and no tile data ever gets parsed. Fixed by copying
+`maplibre-gl-worker.mjs` and its dependency `maplibre-gl-shared.mjs` from
+`node_modules/maplibre-gl/dist/` into `client/public/` (served as static
+files) and setting `config.WORKER_URL = '/maplibre-gl-worker.mjs'` in
+`EventMap.jsx` before any map is created — this is MapLibre's documented
+override mechanism for exactly this bundler scenario. Confirmed fixed:
+after the change, logged in as a participant, opened a seeded onsite
+event's Details page, and the map now renders full OpenStreetMap tiles
+(roads, water, labels) with the marker correctly placed at the venue.
+Screenshot evidence reviewed directly.
+
+**Verified working:** MapTiler geocoding API confirmed live via direct curl
+(returns results in exactly the shape `EventMap.jsx` expects —
+`place_name`, `geometry.coordinates`); MapLibre style/sprite/font/tile
+endpoints all return 200 with the real key; the Event Details venue map
+renders correctly end-to-end in the real app (login → event details →
+map with tiles + marker), confirmed via headless-browser screenshot.
+
+**Not verified — a genuine open item, not a fallback/config gap:** the
+organizer form's search-and-select flow (typing into the picker's venue
+search box) could not be exercised through the headless harness — typed
+keystrokes were not registering in *any* text input on that page (not
+specific to the map search box), most likely a headless-Chrome +
+WebGL/SwiftShader + synthetic-keyboard-event interaction rather than an
+app bug, but this was not root-caused before time was reprioritized to
+Phase 9. The map's default (pre-search) render on the Create Event page
+was confirmed working via screenshot; only the interactive
+type-then-select part of the picker remains unverified. **Needs a manual
+check in a real browser before demo**, or a follow-up debugging pass.
 
 **Not started:** Phases 9–11 (general polish, automated tests, docs).

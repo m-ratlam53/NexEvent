@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { MapLibreMap, Marker, NavigationControl } from 'maplibre-gl';
+import { MapLibreMap, Marker, NavigationControl, config } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+// maplibre-gl resolves its tile-parsing Web Worker relative to its own
+// module URL at runtime — that breaks once the app is bundled into a single
+// file (there's no sibling maplibre-gl-worker.mjs next to it any more), so
+// the worker silently fails to load and tiles never render even though the
+// map shell/controls/marker all initialize fine. Pointing WORKER_URL at a
+// copy served from /public (see client/public/maplibre-gl-worker.mjs)
+// fixes this in both dev and production builds.
+config.WORKER_URL = '/maplibre-gl-worker.mjs';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_API_KEY;
 const STYLE_URL = MAPTILER_KEY
