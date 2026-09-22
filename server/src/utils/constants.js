@@ -16,6 +16,7 @@ export const EVENT_MODE = {
 
 export const REGISTRATION_STATUS = {
   REGISTERED: 'registered',
+  WAITLISTED: 'waitlisted',
   CANCELLED: 'cancelled',
 };
 

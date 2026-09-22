@@ -73,10 +73,11 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <AnalyticsCard label="Total events" value={stats.totalEvents} />
         <AnalyticsCard label="Upcoming events" value={stats.upcomingEventsCount} />
         <AnalyticsCard label="Total registrations" value={stats.totalRegistrations} />
+        <AnalyticsCard label="Waitlisted" value={stats.totalWaitlisted} />
         <AnalyticsCard label="Available seats" value={stats.availableSeats} />
         <AnalyticsCard label="Registration rate" value={`${stats.registrationPercentage}%`} />
       </div>
@@ -95,6 +96,7 @@ export default function Dashboard() {
                 <p className="truncate text-sm font-medium text-neutral-900">{event.name}</p>
                 <p className="text-xs text-neutral-500">
                   {new Date(event.date).toLocaleDateString()} · {event.registeredCount}/{event.capacity} registered
+                  {event.waitlistedCount > 0 && ` · ${event.waitlistedCount} waitlisted`}
                 </p>
               </div>
               <div className="flex items-center gap-3">

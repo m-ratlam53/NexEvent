@@ -92,6 +92,12 @@ export default function EventDetails() {
           You're registered for this event.
         </p>
       )}
+      {event.isWaitlisted && (
+        <p className="mt-6 rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">
+          You're on the waitlist — position #{event.myWaitlistPosition}. You'll be registered automatically if a
+          seat opens up.
+        </p>
+      )}
 
       <div className="mt-4">
         <RegistrationButton event={event} onChange={load} />

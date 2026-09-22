@@ -1,9 +1,20 @@
 import * as registrationService from '../services/registration.service.js';
+import { REGISTRATION_STATUS } from '../utils/constants.js';
 
 export async function register(req, res, next) {
   try {
-    const registration = await registrationService.registerParticipant(req.user.id, req.body.eventId);
-    res.status(201).json({ registration });
+    const { registration, outcome } = await registrationService.registerParticipant(req.user.id, req.body.eventId);
+    const message =
+      outcome === REGISTRATION_STATUS.WAITLISTED
+        ? "Event is full. You've been added to the waitlist."
+        : 'Registration confirmed';
+
+    res.status(201).json({
+      status: outcome,
+      message,
+      waitlistPosition: registration.waitlistPosition ?? undefined,
+      registration,
+    });
   } catch (err) {
     next(err);
   }
@@ -11,8 +22,15 @@ export async function register(req, res, next) {
 
 export async function cancel(req, res, next) {
   try {
-    const registration = await registrationService.cancelRegistration(req.user.id, req.params.id);
-    res.json({ registration });
+    const { registration, promoted } = await registrationService.cancelRegistration(req.user.id, req.params.id);
+
+    res.json({
+      registration,
+      promoted,
+      message: promoted
+        ? 'Registration cancelled. The next waitlisted participant has been promoted.'
+        : 'Registration cancelled.',
+    });
   } catch (err) {
     next(err);
   }

@@ -37,8 +37,9 @@ export default function EventAnalytics() {
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-semibold text-neutral-900">{analytics.name} — Analytics</h1>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
         <AnalyticsCard label="Registered" value={analytics.registeredCount} />
+        <AnalyticsCard label="Waitlisted" value={analytics.waitlistedCount} />
         <AnalyticsCard label="Capacity" value={analytics.capacity} />
         <AnalyticsCard label="Available seats" value={analytics.availableSeats} />
         <AnalyticsCard label="Registration rate" value={`${analytics.registrationPercentage}%`} />

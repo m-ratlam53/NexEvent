@@ -4,7 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { registerForEvent, cancelRegistrationRequest } from '../services/registrations.service';
 import ConfirmDialog from './ConfirmDialog';
 
-const BLOCKED_STATUSES = ['Completed', 'Cancelled', 'Draft', 'Full'];
+const BLOCKED_STATUSES = ['Completed', 'Cancelled', 'Draft'];
 
 export default function RegistrationButton({ event, onChange }) {
   const { user } = useAuth();
@@ -19,8 +19,8 @@ export default function RegistrationButton({ event, onChange }) {
     setSubmitting(true);
     setError('');
     try {
-      await registerForEvent(event._id);
-      showToast('Registered — seat confirmed.');
+      const { status, message, waitlistPosition } = await registerForEvent(event._id);
+      showToast(status === 'waitlisted' ? `${message} You're #${waitlistPosition} in line.` : message);
       onChange();
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -34,8 +34,14 @@ export default function RegistrationButton({ event, onChange }) {
     setSubmitting(true);
     setError('');
     try {
-      await cancelRegistrationRequest(event.myRegistrationId);
-      showToast('Registration cancelled — your seat was released.');
+      const { promoted } = await cancelRegistrationRequest(event.myRegistrationId);
+      showToast(
+        event.isRegistered && promoted
+          ? 'Registration cancelled — the next waitlisted participant was promoted.'
+          : event.isWaitlisted
+            ? 'You left the waitlist.'
+            : 'Registration cancelled — your seat was released.',
+      );
       onChange();
     } catch (err) {
       setError(err.response?.data?.error || 'Cancellation failed');
@@ -44,7 +50,7 @@ export default function RegistrationButton({ event, onChange }) {
     }
   }
 
-  if (event.isRegistered) {
+  if (event.isRegistered || event.isWaitlisted) {
     return (
       <div>
         <button
@@ -52,14 +58,18 @@ export default function RegistrationButton({ event, onChange }) {
           disabled={submitting}
           className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
         >
-          Cancel registration
+          {event.isWaitlisted ? 'Leave waitlist' : 'Cancel registration'}
         </button>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         <ConfirmDialog
           open={confirmOpen}
-          title="Cancel your registration?"
-          description="Your seat will be released for other participants."
-          confirmLabel="Cancel registration"
+          title={event.isWaitlisted ? 'Leave the waitlist?' : 'Cancel your registration?'}
+          description={
+            event.isWaitlisted
+              ? 'You will lose your place in line and will need to join again from the back of the queue.'
+              : 'Your seat will be released for other participants.'
+          }
+          confirmLabel={event.isWaitlisted ? 'Leave waitlist' : 'Cancel registration'}
           danger
           onConfirm={handleCancelConfirmed}
           onCancel={() => setConfirmOpen(false)}
@@ -69,6 +79,7 @@ export default function RegistrationButton({ event, onChange }) {
   }
 
   const blocked = BLOCKED_STATUSES.includes(event.displayStatus);
+  const isFull = event.displayStatus === 'Full';
 
   return (
     <div>
@@ -77,12 +88,11 @@ export default function RegistrationButton({ event, onChange }) {
         disabled={blocked || submitting}
         className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? 'Registering…' : 'Register'}
+        {submitting ? 'Submitting…' : isFull ? 'Join waitlist' : 'Register'}
       </button>
-      {blocked && (
-        <p className="mt-2 text-xs text-neutral-500">
-          {event.displayStatus === 'Full' ? 'This event is full.' : 'Registration is not open for this event.'}
-        </p>
+      {blocked && <p className="mt-2 text-xs text-neutral-500">Registration is not open for this event.</p>}
+      {isFull && !blocked && (
+        <p className="mt-2 text-xs text-neutral-500">This event is full — you'll join the waitlist.</p>
       )}
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>

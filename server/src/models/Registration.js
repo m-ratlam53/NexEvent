@@ -10,6 +10,10 @@ const registrationSchema = new mongoose.Schema(
       enum: Object.values(REGISTRATION_STATUS),
       default: REGISTRATION_STATUS.REGISTERED,
     },
+    // 1-based FIFO position among this event's currently WAITLISTED entries.
+    // null for registered/cancelled entries. Kept contiguous (1..N) by
+    // recomputeWaitlistPositions() after every join/cancel/promotion.
+    waitlistPosition: { type: Number, default: null },
   },
   { timestamps: true },
 );

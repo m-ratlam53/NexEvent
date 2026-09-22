@@ -437,3 +437,119 @@ against the real app with the real MapTiler key):
 picker's interactive search-and-select flow remains unverified from
 Phase 8 (see above) — carried forward, not blocking, since the underlying
 geocoding API and map rendering are both independently confirmed working.
+
+## Mid-hackathon change request — Waitlist Management ✅
+With ~2 hours left, Phase 10/11 work was paused for a change request:
+when an event is full, a new registration joins a FIFO waitlist instead of
+being rejected; cancelling a registered entry auto-promotes the earliest
+waitlisted participant.
+
+**Model:** `Registration.status` extended to `"registered" | "waitlisted" |
+"cancelled"`; added `waitlistPosition` (1-based, contiguous, `null` when
+not waitlisted). No new collection — extends the existing model, per the
+request.
+
+**Backend (all in the existing services/controllers/routes, no new
+endpoints):**
+- `registration.service.js`: `registerParticipant` now creates a
+  `"waitlisted"` entry (position = current waitlist count + 1) instead of
+  throwing when the event is full; the duplicate-entry check now covers
+  both `"registered"` and `"waitlisted"` (one active entry per participant
+  per event, previously-cancelled entries don't block rejoining).
+  `cancelRegistration` now: if the cancelled entry was `"registered"`,
+  finds the earliest waitlisted entry (lowest `waitlistPosition`) and
+  promotes it, then renumbers the remaining waitlist to stay contiguous;
+  if the cancelled entry was `"waitlisted"`, only renumbers (no
+  promotion). Cancelling an already-cancelled entry stays a no-op — no
+  re-promotion on repeated calls. The pre-existing non-atomic capacity
+  check was left as-is (documented limitation, unchanged) per the
+  request's own instruction not to introduce new infrastructure with
+  limited time — it doesn't affect the promotion path's correctness.
+- `registration.controller.js`: `register` response now shapes
+  `{status, message, waitlistPosition?, registration}`; `cancel` response
+  shapes `{registration, promoted, message}` so the frontend knows
+  whether a promotion just happened.
+- `event.service.js`: `getEventById` (Event Details) now also reports
+  `isWaitlisted`/`myWaitlistPosition` for the requesting participant;
+  `getOrganizerEvents` (Dashboard's event list) now also carries
+  `waitlistedCount` per event.
+- `analytics.service.js`: both the dashboard rollup and single-event
+  analytics gained a `waitlistedCount`/`totalWaitlisted` figure, computed
+  independently — `registeredCount`/`availableSeats`/
+  `registrationPercentage` untouched, still registered-only, never
+  inflated by the waitlist (verified, see below).
+
+**Frontend (extended existing components/pages, no new visual pattern):**
+- `RegistrationButton` (Event Details' "registration action"): shows
+  "Join waitlist" instead of a disabled button when full; toasts the
+  waitlist position on join; "Leave waitlist" vs "Cancel registration"
+  depending on current state; cancel toast mentions auto-promotion when it
+  happened.
+- `EventDetails`: added a persistent amber "You're on the waitlist —
+  position #N" banner alongside the existing green "You're registered"
+  one.
+- `MyRegistrations`: each row now shows `"Registered"` or
+  `"Waitlisted · #N"`; the cancel/leave action adapts its label.
+- `Participants` (organizer, per event): split into two sections,
+  Registered and Waitlisted (with position), instead of one flat list.
+- `Dashboard` and `EventAnalytics`: added a "Waitlisted" stat card
+  alongside the existing metrics.
+- `EventStatus`: added a `Waitlisted` badge style; matching updated to
+  prefix-match so `"Waitlisted · #3"` still gets the right color.
+
+**Tests performed — all 10 required cases plus the exact Step 5 demo
+flow, via a scripted test client against the live API** (not curl
+one-liners — the sequential, stateful nature of these cases needed real
+assertions, so a Node script drove the real running server through fresh
+seeded data):
+1. Capacity 3, register A/B/C → all registered — **PASS**
+2. Capacity 3 full, D registers → waitlisted #1 — **PASS**
+3. D#1/E#2/F#3 waitlisted, B (registered) cancels → D promoted, E→#1,
+   F→#2 — **PASS**
+4. Waitlisted participant cancels (E, while F was #2) → F becomes #1,
+   no promotion — **PASS**
+5. Already-registered participant registers again → 409 rejected —
+   **PASS**
+6. Already-waitlisted participant registers again → 409 rejected, no
+   duplicate entry created — **PASS**
+7. Cancelled event → registration attempt rejected (400, "Event has been
+   cancelled"), no waitlist entry — **PASS**
+8. Capacity 1: A registered, B#1, C#2 waitlisted, A cancels → B promoted,
+   C→#1, invariant (registered ≤ capacity) holds — **PASS**
+9. Waitlisted participant cancels while others remain → no incorrect
+   promotion (the registered participant's seat is untouched), remaining
+   positions stay correct — **PASS**
+10. Multiple sequential cancellations/promotions on a capacity-1 event →
+    capacity never exceeded, FIFO order holds throughout — **PASS**
+
+33/33 assertions passed across the 10 cases (some cases had multiple
+assertions — e.g. checking both the response and the organizer's
+participants view independently for the same state).
+
+**Step 5 demo flow, run exactly as specified end-to-end against the live
+API:** organizer creates a capacity-2 event → A registers (`registered`) →
+B registers (`registered`, now full) → C registers → gets
+`{status: "waitlisted", waitlistPosition: 1}` → organizer's participants
+view shows Registered: A, B / Waitlisted: C#1 → A cancels → response
+includes the promoted registration → organizer's view now shows
+Registered: B, C / Waitlisted: empty → that event's analytics show
+`registeredCount: 2, waitlistedCount: 0` (never inflated). **PASS — full
+flow confirmed working end to end.**
+
+**Known remaining issue:** the frontend changes (RegistrationButton,
+EventDetails banner, MyRegistrations, Participants split view, Dashboard/
+EventAnalytics stat cards) were verified by code review and a clean
+production build (`npm run build` succeeds, no errors) but **not** by
+clicking through the UI in a browser — all verification time went into
+proving the backend logic correct against the 10 required cases and the
+exact demo flow, which was the higher-risk, harder-to-get-right part
+under time pressure. The API responses those components consume are the
+same ones proven correct above, and the components reuse already-verified
+patterns (`EventStatus`, `ConfirmDialog`, `useToast`) rather than new
+ones, but this is still a gap worth a manual click-through before the
+live demo if time allows.
+
+**Existing functionality preserved:** no unrelated files touched; event
+CRUD/lifecycle, auth, discovery/search/filter/recommendations, venue map,
+and the pre-existing analytics metrics are all untouched by this change
+(only additive fields/branches were introduced alongside them).

@@ -4,6 +4,26 @@ import { AppError } from '../utils/AppError.js';
 import { EVENT_STATUS, REGISTRATION_STATUS } from '../utils/constants.js';
 import { combineDateAndTime } from '../utils/deriveDisplayStatus.js';
 
+// Renumbers this event's active waitlist to a contiguous 1..N, ordered by
+// each entry's current position (falling back to join order for any that
+// haven't been assigned one yet). Called after every join, cancel, and
+// promotion so positions never drift or leave gaps.
+async function recomputeWaitlistPositions(eventId) {
+  const waitlisted = await Registration.find({
+    event: eventId,
+    status: REGISTRATION_STATUS.WAITLISTED,
+  }).sort({ waitlistPosition: 1, createdAt: 1 });
+
+  await Promise.all(
+    waitlisted.map((entry, index) => {
+      const position = index + 1;
+      if (entry.waitlistPosition === position) return null;
+      entry.waitlistPosition = position;
+      return entry.save();
+    }),
+  );
+}
+
 /**
  * Section 9 registration rules, enforced in order. Steps 2 and 3 from the
  * spec's listing are checked cancelled-first here (rather than the literal
@@ -14,12 +34,20 @@ import { combineDateAndTime } from '../utils/deriveDisplayStatus.js';
  * makes both of the spec's distinct messages actually reachable; every
  * input is rejected identically either way.
  *
- * Known limitation (spec section 9): the capacity check below is not
- * atomic — two simultaneous requests for the last seat could both read a
- * count under capacity before either writes. Isolating this logic in a
- * single service function (rather than spreading it across the controller)
- * means it can be swapped for `findOneAndUpdate` with an atomic capacity
- * guard, or a transaction, without touching the controller or routes.
+ * Waitlist (mid-hackathon change request): a full event no longer rejects
+ * the request outright — the participant joins a FIFO waitlist instead
+ * (rule 2 below). A participant may hold only one ACTIVE entry (registered
+ * OR waitlisted) per event at a time (rule 5); a previously cancelled entry
+ * doesn't block rejoining.
+ *
+ * Known limitation (spec section 9, unchanged by this change): the
+ * capacity check is not atomic — two simultaneous requests for the last
+ * seat could both read a count under capacity before either writes. Left
+ * as-is per the change request's own guidance not to introduce new
+ * infrastructure with limited time remaining; the risk is a rare
+ * over-capacity registration on truly simultaneous requests, not a
+ * waitlist-correctness issue (this function still isn't spread across the
+ * controller, so it remains swappable for an atomic guard later).
  */
 export async function registerParticipant(participantId, eventId) {
   const event = await Event.findById(eventId);
@@ -40,22 +68,42 @@ export async function registerParticipant(participantId, eventId) {
   const existing = await Registration.findOne({
     event: eventId,
     participant: participantId,
-    status: REGISTRATION_STATUS.REGISTERED,
-  });
+    status: { $in: [REGISTRATION_STATUS.REGISTERED, REGISTRATION_STATUS.WAITLISTED] },
+  }); // 5 — one active entry (registered OR waitlisted) per participant per event
   if (existing) {
-    throw new AppError('You are already registered for this event', 409); // 5
+    const message =
+      existing.status === REGISTRATION_STATUS.WAITLISTED
+        ? 'You are already on the waitlist for this event'
+        : 'You are already registered for this event';
+    throw new AppError(message, 409);
   }
 
   const registeredCount = await Registration.countDocuments({
     event: eventId,
     status: REGISTRATION_STATUS.REGISTERED,
   });
-  if (registeredCount >= event.capacity) {
-    throw new AppError('Event is full', 400); // 6
+
+  if (registeredCount < event.capacity) {
+    const registration = await Registration.create({
+      event: eventId,
+      participant: participantId,
+      status: REGISTRATION_STATUS.REGISTERED,
+    });
+    return { registration, outcome: REGISTRATION_STATUS.REGISTERED };
   }
 
-  const registration = await Registration.create({ event: eventId, participant: participantId }); // 7
-  return registration;
+  // 6 — full: join the waitlist instead of rejecting outright.
+  const waitlistCount = await Registration.countDocuments({
+    event: eventId,
+    status: REGISTRATION_STATUS.WAITLISTED,
+  });
+  const registration = await Registration.create({
+    event: eventId,
+    participant: participantId,
+    status: REGISTRATION_STATUS.WAITLISTED,
+    waitlistPosition: waitlistCount + 1,
+  });
+  return { registration, outcome: REGISTRATION_STATUS.WAITLISTED };
 }
 
 export async function cancelRegistration(participantId, registrationId) {
@@ -65,12 +113,36 @@ export async function cancelRegistration(participantId, registrationId) {
     throw new AppError('You do not have permission to cancel this registration', 403);
   }
 
-  if (registration.status !== REGISTRATION_STATUS.CANCELLED) {
-    registration.status = REGISTRATION_STATUS.CANCELLED;
-    await registration.save();
+  if (registration.status === REGISTRATION_STATUS.CANCELLED) {
+    return { registration, promoted: null }; // already cancelled — idempotent, no re-promotion
   }
 
-  return registration;
+  const wasRegistered = registration.status === REGISTRATION_STATUS.REGISTERED;
+  registration.status = REGISTRATION_STATUS.CANCELLED;
+  registration.waitlistPosition = null;
+  await registration.save();
+
+  let promoted = null;
+  if (wasRegistered) {
+    // A confirmed seat just opened up — automatically promote the earliest
+    // waitlisted participant into it (rule 5). Cancelling a waitlist entry
+    // (the `else` case, handled by the recompute below) never promotes
+    // anyone — it only closes the gap in the queue behind it (rule 6).
+    promoted = await Registration.findOne({
+      event: registration.event,
+      status: REGISTRATION_STATUS.WAITLISTED,
+    }).sort({ waitlistPosition: 1, createdAt: 1 });
+
+    if (promoted) {
+      promoted.status = REGISTRATION_STATUS.REGISTERED;
+      promoted.waitlistPosition = null;
+      await promoted.save();
+    }
+  }
+
+  await recomputeWaitlistPositions(registration.event);
+
+  return { registration, promoted };
 }
 
 export async function getParticipantRegistrations(participantId) {

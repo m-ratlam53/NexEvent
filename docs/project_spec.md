@@ -131,17 +131,27 @@ Never expose password hashes in any API response. All secrets (Mongo URI, JWT se
   _id,
   event: ObjectId ref Event (required),
   participant: ObjectId ref User (required),
-  status: "registered" | "cancelled" (default "registered"),
+  status: "registered" | "waitlisted" | "cancelled" (default "registered"),
+  waitlistPosition: Number | null,
   createdAt,
   updatedAt
 }
 ```
 
+> **Change request (waitlist management)** added `"waitlisted"` as a third
+> status and `waitlistPosition`. A full event no longer rejects a new
+> registration outright — the participant joins a FIFO waitlist instead.
+> `waitlistPosition` is a 1-based, contiguous (1..N) position among an
+> event's currently-waitlisted entries; it's `null` for
+> registered/cancelled entries and is recomputed after every join,
+> cancellation, or promotion so it never drifts or leaves gaps. See
+> section 9 for the full mechanics.
+
 Add appropriate indexes (e.g. compound index on `{event, participant}` to support efficient duplicate-registration checks; index on `Event.status` and `Event.date` for listing queries).
 
 Never delete a Registration on cancellation — flip `status` to `"cancelled"`. Never delete an Event on cancellation — flip `status` to `"cancelled"`. Both preserve history.
 
-Registration counts are always derived from `Registration.countDocuments({event, status: "registered"})` — never stored as a mutable counter on Event.
+Registration counts are always derived from `Registration.countDocuments({event, status: "registered"})` — never stored as a mutable counter on Event, and never inflated by waitlisted entries.
 
 ## 8. Event Status & Lifecycle (important — read carefully)
 
@@ -172,13 +182,22 @@ Registration is only allowed when: `status === "published"` AND displayStatus is
 2. `Event.status === "published"` → else `"Registration is closed"`
 3. Event is not cancelled → else `"Event has been cancelled"`
 4. Event is not completed (end time not passed) → else `"This event has already ended"`
-5. No existing active (`status: "registered"`) registration by this participant for this event → else `"You are already registered for this event"`
-6. Active registration count < capacity → else `"Event is full"`
-7. Create registration, return 201 with the created document
+5. No existing **active** (`status: "registered"` OR `"waitlisted"`) registration by this participant for this event → else `"You are already registered for this event"` / `"You are already on the waitlist for this event"`. A previously-cancelled entry does not block rejoining.
+6. Active registered count < capacity → create with `status: "registered"`. **Otherwise (change request) — never reject outright:** create with `status: "waitlisted"`, `waitlistPosition` = current waitlisted count + 1 (FIFO append).
+7. Return 201. Response shape: `{ status: "registered"|"waitlisted", message, waitlistPosition? (only when waitlisted), registration }`.
 
-`PATCH /api/registrations/:id/cancel` — participant must own the registration (`req.user.id === registration.participant`). Set `status` to `"cancelled"`. Never delete.
+`PATCH /api/registrations/:id/cancel` — participant must own the registration (`req.user.id === registration.participant`). Set `status` to `"cancelled"` and `waitlistPosition` to `null`. Never delete. Idempotent: cancelling an already-cancelled entry is a no-op (no re-promotion).
 
-**Race condition note:** two simultaneous requests for the last seat could both pass the capacity check before either writes. If time allows, use `findOneAndUpdate` with an atomic capacity guard or a MongoDB transaction. If not, structure the registration logic in a dedicated service function so this can be upgraded later without touching controllers or routes. Document this as a known limitation either way.
+**Waitlist auto-promotion (change request):** if the cancelled entry was `"registered"`, the seat it held is filled automatically:
+1. Find the earliest active waitlisted entry for that event (lowest `waitlistPosition`).
+2. If one exists, promote it: `status → "registered"`, `waitlistPosition → null`. No participant action needed.
+3. Recompute the remaining waitlist's positions to stay contiguous (1..N).
+
+Cancelling a **waitlisted** entry never triggers a promotion — it only removes that entry from the queue and recomputes the remaining positions.
+
+**Hard invariant, holds at all times including after promotion:** registered count for an event never exceeds its capacity — guaranteed because promotion only fires when a registered cancellation just freed exactly one seat, and promotes exactly one waitlisted entry to fill it.
+
+**Race condition note:** two simultaneous requests for the last seat could both pass the capacity check before either writes. If time allows, use `findOneAndUpdate` with an atomic capacity guard or a MongoDB transaction. If not, structure the registration logic in a dedicated service function so this can be upgraded later without touching controllers or routes. Document this as a known limitation either way. (Unchanged by the waitlist change request — left as a documented limitation rather than introducing new infrastructure; a rare simultaneous-last-seat race could theoretically let one extra registration land as "registered" instead of "waitlisted", but never breaks the registered-count ≤ capacity invariant on the promotion path itself.)
 
 ## 10. Venue / Map Feature
 
@@ -211,6 +230,11 @@ Keep this to a plain sort/filter function with a comment explaining the ranking 
 - Event-wise registration counts
 
 No additional charts or metrics beyond this list.
+
+**Change request (waitlist management)** added one metric on top of this
+list, not a replacement: a **waitlisted count** (per-event and aggregated).
+`registeredCount`, `availableSeats`, and `registrationPercentage` stay
+based on `"registered"` entries only — never inflated by the waitlist.
 
 ## 13. API Design
 
@@ -292,9 +316,13 @@ Avoid giant components — a page composes smaller components rather than contai
 
 **Explore page:** search, category filter, date filter, sort, event cards, "Recommended for you" section. Cards show: name, category, date/time, venue, organizer, seats/status — no clutter.
 
-**Event Details page** must answer, at a glance: What is this? When? Where (with map)? Who's organizing it? How many seats left? Am I registered?
+**Event Details page** must answer, at a glance: What is this? When? Where (with map)? Who's organizing it? How many seats left? Am I registered? — and, since the waitlist change request, *am I waitlisted, and at what position?*
 
 **Organizer Dashboard:** stats strip (section 12 metrics) + event management list (status, date, registered/capacity, actions: View, Edit, Publish, Cancel, Participants, Analytics). Not a dense admin table.
+
+**Participants (per event)**, since the waitlist change request: two lists, **Registered** and **Waitlisted** (the latter showing each entry's position), rather than one flat list.
+
+**My Registrations**, since the waitlist change request: each row shows `"Registered"` or `"Waitlisted · #N"`; a promoted entry reads as `"Registered"` automatically, with no participant action.
 
 ## 17. UI/UX Direction
 

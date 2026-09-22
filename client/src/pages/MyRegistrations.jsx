@@ -67,13 +67,21 @@ export default function MyRegistrations() {
                 </p>
               </Link>
               <div className="flex items-center gap-3">
-                <EventStatus status={reg.status === 'cancelled' ? 'Cancelled' : 'Registered'} />
-                {reg.status === 'registered' && (
+                <EventStatus
+                  status={
+                    reg.status === 'cancelled'
+                      ? 'Cancelled'
+                      : reg.status === 'waitlisted'
+                        ? `Waitlisted · #${reg.waitlistPosition}`
+                        : 'Registered'
+                  }
+                />
+                {(reg.status === 'registered' || reg.status === 'waitlisted') && (
                   <button
                     onClick={() => setPendingCancelId(reg._id)}
                     className="text-sm font-medium text-red-600 hover:underline"
                   >
-                    Cancel
+                    {reg.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel'}
                   </button>
                 )}
               </div>

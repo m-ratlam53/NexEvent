@@ -123,24 +123,51 @@ export async function getEventById(eventId, requester) {
   const registeredCount = await countRegisteredForEvent(event._id);
 
   let isRegistered = false;
+  let isWaitlisted = false;
   let myRegistrationId = null;
+  let myWaitlistPosition = null;
   if (requester) {
     const activeRegistration = await Registration.findOne({
       event: event._id,
       participant: requester.id,
-      status: REGISTRATION_STATUS.REGISTERED,
+      status: { $in: [REGISTRATION_STATUS.REGISTERED, REGISTRATION_STATUS.WAITLISTED] },
     });
-    if (activeRegistration) {
+    if (activeRegistration?.status === REGISTRATION_STATUS.REGISTERED) {
       isRegistered = true;
       myRegistrationId = activeRegistration._id;
+    } else if (activeRegistration?.status === REGISTRATION_STATUS.WAITLISTED) {
+      isWaitlisted = true;
+      myRegistrationId = activeRegistration._id;
+      myWaitlistPosition = activeRegistration.waitlistPosition;
     }
   }
 
-  return { ...toEventDTO(event, registeredCount), isRegistered, myRegistrationId };
+  return {
+    ...toEventDTO(event, registeredCount),
+    isRegistered,
+    isWaitlisted,
+    myRegistrationId,
+    myWaitlistPosition,
+  };
+}
+
+async function countWaitlistedByEvent(eventIds) {
+  const counts = await Registration.aggregate([
+    { $match: { event: { $in: eventIds }, status: REGISTRATION_STATUS.WAITLISTED } },
+    { $group: { _id: '$event', count: { $sum: 1 } } },
+  ]);
+  return new Map(counts.map((c) => [c._id.toString(), c.count]));
 }
 
 export async function getOrganizerEvents(organizerId) {
   const events = await Event.find({ organizer: organizerId }).sort({ createdAt: -1 });
-  const countMap = await countRegisteredByEvent(events.map((e) => e._id));
-  return events.map((event) => toEventDTO(event, countMap.get(event._id.toString()) || 0));
+  const eventIds = events.map((e) => e._id);
+  const [registeredCountMap, waitlistedCountMap] = await Promise.all([
+    countRegisteredByEvent(eventIds),
+    countWaitlistedByEvent(eventIds),
+  ]);
+  return events.map((event) => ({
+    ...toEventDTO(event, registeredCountMap.get(event._id.toString()) || 0),
+    waitlistedCount: waitlistedCountMap.get(event._id.toString()) || 0,
+  }));
 }
