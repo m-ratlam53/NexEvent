@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { changePasswordRequest } from '../services/auth.service';
 import PasswordInput from '../components/PasswordInput';
+import ThemeToggle from '../components/ThemeToggle';
 import PageFade from '../components/motion/Reveal';
 import { FIELD_CLASS, LABEL_CLASS, BUTTON_PRIMARY, BUTTON_SECONDARY } from '../utils/styles';
 
@@ -168,6 +169,15 @@ export default function Profile() {
 
       <PageFade
         delay={0.1}
+        className="mt-6 rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
+      >
+        <h2 className="font-display text-base font-bold text-neutral-900 dark:text-neutral-100">Appearance</h2>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Choose how NexEvent looks on this device.</p>
+        <ThemeToggle className="mt-4" />
+      </PageFade>
+
+      <PageFade
+        delay={0.15}
         className="mt-6 rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
       >
         <h2 className="font-display text-base font-bold text-neutral-900 dark:text-neutral-100">Change password</h2>
