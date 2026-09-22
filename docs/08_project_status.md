@@ -69,3 +69,67 @@ build's successful module resolution plus the passing API tests behind it
 give reasonable confidence, but the UI itself hasn't been clicked through.
 
 **Not started:** Phases 4–11.
+
+## Phase 4 — Event management ✅
+- **Backend:** `Event` model per spec section 7, with compound indexes on
+  `{status, date}` and `organizer`. Shared enums/constants
+  (`server/src/utils/constants.js`: `USER_ROLES`, `EVENT_STATUS`, `EVENT_MODE`,
+  `EVENT_CATEGORIES`, `DISPLAY_STATUS`) so nothing is a magic string —
+  `User.js` now references `USER_ROLES` too. `deriveDisplayStatus.js`
+  implements section 8's exact derivation order (Cancelled → Completed →
+  Ongoing → Draft → Full → Almost Full → Upcoming) and is attached to every
+  event response as `displayStatus` (registeredCount is wired to `0` for now
+  — the Registration model doesn't exist until Phase 5; `toEventDTO` already
+  takes a `registeredCount` param so Phase 5 only has to pass a real number
+  in, not touch this logic). `event.service.js` centralizes all business
+  logic: create (always starts `draft`), update/publish/cancel (all
+  ownership-checked via `findOwnedEvent`, 403 on mismatch), public listing
+  (`status: published` only, `category`/`date`/`search` filters), single-event
+  fetch (draft events 404 for everyone except the owner, via a new
+  `optionalAuthenticate` middleware), and organizer's-own-events (any status).
+  Routes: `GET/POST /api/events`, `GET/PUT /api/events/:id`,
+  `PATCH /api/events/:id/publish`, `PATCH /api/events/:id/cancel`,
+  `GET /api/organizer/events` — mutating routes require `authenticate` +
+  `authorize('organizer')`. `scripts/seed.js` (`npm run seed`) creates 2
+  organizers, 2 participants, and 6 events spanning published/draft/cancelled
+  and past/future dates.
+- **Frontend:** `services/events.service.js` (axios calls for all the above),
+  shared components (`EventCard`, `EventStatus`, `CapacityIndicator`,
+  `EmptyState`, `LoadingState`, `ErrorState`), `layouts/AppLayout.jsx` (nav
+  shell with role-aware links + logout), read-only `Explore` and
+  `EventDetails` pages, and a reusable `features/events/EventForm.jsx` driving
+  organizer `CreateEvent`/`EditEvent` pages plus a `ManageEvents` list (the
+  minimal navigation needed to reach Edit — the full stats dashboard is
+  Phase 7). Routing nests role-gated routes under `ProtectedRoute`. The
+  now-superseded placeholder `Home` page was removed in favor of `Explore`.
+- **Design decision:** the spec forbids organizers ever typing lat/lng by
+  hand, but the MapTiler/MapLibre picker isn't built until Phase 8. Rather
+  than requiring coordinates now (which would force a manual-entry workaround)
+  or blocking event creation entirely, the venue field for this phase is a
+  plain address text input and `latitude`/`longitude` stay optional at both
+  the schema and validator level. Phase 8 replaces the input with the real
+  geocode-and-pick flow and starts populating coordinates — the validator's
+  "onsite requires an address" rule doesn't need to change.
+
+**Verified (live smoke test against local MongoDB, seeded data):**
+- `GET /api/events` returns only the 4 published seed events, excludes the
+  draft and the cancelled one; `displayStatus` correctly computed per event
+  (e.g. the seeded past event shows `Completed`).
+- Draft event: 404 for anonymous and for a different organizer, 200 for its
+  owner.
+- Cross-organizer ownership: organizer2 publishing organizer1's draft → 403;
+  a participant creating an event → 403.
+- Owner publish flow: draft → published, `displayStatus` updates accordingly.
+- Validation: missing required fields → 400 with all reasons joined; end time
+  before start time → 400; valid submission → 201 with `status: "draft"`.
+- Filters: `?category=Technology` and `?search=pitch` both return the correct
+  subset.
+- Malformed `:id` → clean `400 {"error":"Invalid identifier"}`, not a raw
+  Mongoose CastError.
+- `client`: `npm run build` succeeds (100 modules, no import errors).
+
+**Not independently verified:** interactive browser testing (no browser tool
+in this environment) — same caveat as Phase 3, carried forward.
+
+**Not started:** Phases 5–11 (registration/capacity, discovery, organizer
+analytics, map integration, polish, tests, docs).
