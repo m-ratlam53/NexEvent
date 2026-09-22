@@ -20,6 +20,16 @@ function buildDirectionsUrl(lat, lng) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
+async function reverseGeocode(lng, lat) {
+  try {
+    const res = await fetch(`https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${MAPTILER_KEY}`);
+    const data = await res.json();
+    return data.features?.[0]?.place_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  } catch {
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  }
+}
+
 /**
  * Single reusable venue map, per spec section 10. `mode="picker"` (used in
  * the organizer's Create/Edit form) adds a debounced MapTiler geocoding
@@ -89,12 +99,46 @@ export default function EventMap({ mode = 'display', value, onChange }) {
     const lngLat = [selected.longitude, selected.latitude];
 
     if (!markerRef.current) {
-      markerRef.current = new Marker({ color: '#7c3aed' }).setLngLat(lngLat).addTo(mapRef.current);
+      markerRef.current = new Marker({ color: '#7c3aed', draggable: mode === 'picker' }).setLngLat(lngLat).addTo(mapRef.current);
+      if (mode === 'picker') {
+        markerRef.current.on('dragend', async () => {
+          const { lng, lat } = markerRef.current.getLngLat();
+          const address = await reverseGeocode(lng, lat);
+          const location = { address, latitude: lat, longitude: lng };
+          setSelected(location);
+          setQuery(address);
+          onChange?.(location);
+        });
+      }
     } else {
       markerRef.current.setLngLat(lngLat);
     }
     mapRef.current.flyTo({ center: lngLat, zoom: 14 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
+
+  // Picker mode: clicking the map drops the pin at the exact spot clicked,
+  // since geocoding search results are often approximate (e.g. street- or
+  // area-level, not rooftop-accurate) and previously offered no way to
+  // correct that.
+  useEffect(() => {
+    if (!mapRef.current || mode !== 'picker') return undefined;
+    const map = mapRef.current;
+
+    async function handleClick(e) {
+      const { lng, lat } = e.lngLat;
+      const address = await reverseGeocode(lng, lat);
+      const location = { address, latitude: lat, longitude: lng };
+      setSelected(location);
+      setQuery(address);
+      setResults([]);
+      onChange?.(location);
+    }
+
+    map.on('click', handleClick);
+    return () => map.off('click', handleClick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   function handleSelectResult(feature) {
     const [longitude, latitude] = feature.geometry.coordinates;
@@ -185,6 +229,10 @@ export default function EventMap({ mode = 'display', value, onChange }) {
       )}
 
       <div ref={containerRef} className="h-64 w-full overflow-hidden rounded-2xl border border-neutral-200/80 shadow-sm" />
+
+      {mode === 'picker' && selected && (
+        <p className="text-xs text-neutral-400">Not quite right? Click the map or drag the pin to set the exact spot.</p>
+      )}
 
       {mode === 'display' && selected && (
         <a

@@ -156,7 +156,7 @@ export default function EventDetails() {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:sticky lg:top-20 lg:col-span-1 lg:self-start">
+        <div className="lg:sticky lg:top-6 lg:col-span-1 lg:self-start">
           {event.isRegistered && (
             <motion.p
               initial={{ opacity: 0, y: 6 }}
