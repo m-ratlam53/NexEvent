@@ -36,12 +36,25 @@ export async function getRecommendedEvents(participantId, limit = 6) {
   const categoryMatches =
     registeredCategories.size > 0 ? eligible.filter((event) => registeredCategories.has(event.category)) : [];
 
-  const pool = categoryMatches.length > 0 ? categoryMatches : eligible;
+  const usedCategoryPool = categoryMatches.length > 0;
+  const pool = usedCategoryPool ? categoryMatches : eligible;
 
-  const ranked = [...pool].sort((a, b) => {
-    if (b.registeredCount !== a.registeredCount) return b.registeredCount - a.registeredCount; // rule 2
-    return new Date(a.date) - new Date(b.date); // rule 3
-  });
+  // Exposes which rule produced this list — not a new computation, just
+  // surfacing the branch already taken above/the signal already sorted on,
+  // so the UI can show "why" a card is recommended.
+  const ranked = [...pool]
+    .sort((a, b) => {
+      if (b.registeredCount !== a.registeredCount) return b.registeredCount - a.registeredCount; // rule 2
+      return new Date(a.date) - new Date(b.date); // rule 3
+    })
+    .map((event) => ({
+      ...event,
+      recommendationReason: usedCategoryPool
+        ? `Because you registered for ${event.category} events`
+        : event.registeredCount > 0
+          ? 'Popular right now'
+          : 'Coming up soon',
+    }));
 
   return ranked.slice(0, limit);
 }
