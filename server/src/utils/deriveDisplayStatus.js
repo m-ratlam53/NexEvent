@@ -1,6 +1,6 @@
 import { EVENT_STATUS, DISPLAY_STATUS } from './constants.js';
 
-function combineDateAndTime(date, time) {
+export function combineDateAndTime(date, time) {
   const [hours, minutes] = time.split(':').map(Number);
   const combined = new Date(date);
   combined.setHours(hours, minutes, 0, 0);

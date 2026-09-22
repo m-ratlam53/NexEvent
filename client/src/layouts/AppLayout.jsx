@@ -15,6 +15,11 @@ export default function AppLayout() {
             <Link to="/" className="text-neutral-600 hover:text-neutral-900">
               Explore
             </Link>
+            {user?.role === 'participant' && (
+              <Link to="/my-registrations" className="text-neutral-600 hover:text-neutral-900">
+                My Registrations
+              </Link>
+            )}
             {user?.role === 'organizer' && (
               <Link to="/organizer/events" className="text-neutral-600 hover:text-neutral-900">
                 My Events

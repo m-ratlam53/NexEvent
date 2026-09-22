@@ -14,6 +14,11 @@ export const EVENT_MODE = {
   ONLINE: 'online',
 };
 
+export const REGISTRATION_STATUS = {
+  REGISTERED: 'registered',
+  CANCELLED: 'cancelled',
+};
+
 export const EVENT_CATEGORIES = [
   'Technology',
   'Business',

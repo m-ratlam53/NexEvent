@@ -133,3 +133,69 @@ in this environment) — same caveat as Phase 3, carried forward.
 
 **Not started:** Phases 5–11 (registration/capacity, discovery, organizer
 analytics, map integration, polish, tests, docs).
+
+## Phase 5 — Registration & capacity ✅
+- **Backend:** `Registration` model (`event`+`participant`+`status`, indexed
+  on `{event,participant}` and `{event,status}`). `registration.service.js`
+  implements section 9's seven ordered rules in
+  `registerParticipant(participantId, eventId)`. One deliberate deviation
+  from the spec's literal order, documented in a code comment: rule 3
+  (cancelled → `"Event has been cancelled"`) is checked *before* rule 2
+  (must be published → `"Registration is closed"`), because with only three
+  status values a cancelled event can never also be `"published"` — checking
+  the generic gate first would always swallow the cancelled case behind the
+  vaguer message. Every input is still rejected identically either way; this
+  only changes which of the spec's two distinct messages is shown. Capacity
+  check is a plain `countDocuments` vs `capacity` (not atomic) — per spec
+  section 9's explicit guidance, this is called out as a known limitation
+  rather than implemented with a transaction, and the logic lives entirely
+  in one service function so it can be swapped for `findOneAndUpdate` +
+  an atomic guard later without touching the controller/routes. Cancel is
+  ownership-checked and idempotent. `event.service.js` now computes real
+  `registeredCount` from `Registration.countDocuments`/an aggregate (batched
+  for listings to avoid N+1 queries) instead of the Phase 4 placeholder
+  `0`, and `getEventById` additionally returns `isRegistered` /
+  `myRegistrationId` for the requesting participant (via
+  `optionalAuthenticate`). Routes: `POST /api/registrations` and
+  `PATCH /api/registrations/:id/cancel` (participant role only — organizers
+  are blocked at the role-middleware level, matching section 5's
+  permissions), `GET /api/users/me/registrations`.
+- **Frontend:** `services/registrations.service.js`, a reusable
+  `ConfirmDialog` component, and `RegistrationButton` (register directly;
+  cancel behind a confirm dialog since it's destructive; disabled with a
+  reason when the event is Full/Draft/Completed/Cancelled; hidden entirely
+  for non-participants). Wired into `EventDetails` (shows a "you're
+  registered" banner + the button, refetches the event on any change) and a
+  new `MyRegistrations` page (lists all of a participant's registrations —
+  active and cancelled — with per-row cancel). Added the nav link and route.
+
+**Verified (live smoke test against re-seeded local MongoDB):**
+- Register → 201; duplicate register → 409; register for a completed event →
+  400 "This event has already ended"; organizer attempting to register → 403
+  (role-blocked).
+- Filled a 5-capacity event to exactly 5/5 → `displayStatus` becomes `Full`;
+  a 6th participant registering → 400 "Event is full".
+- Cancelling one registration drops the count to 4/5 and immediately frees a
+  seat — the previously-blocked participant can now register successfully
+  (201).
+- Cancelling someone else's registration → 403 (ownership enforced,
+  independent of role).
+- Registering for a cancelled event → 400 "Event has been cancelled" (the
+  specific message, confirming the reordering decision above works as
+  intended).
+- `GET /api/events/:id` correctly reports `isRegistered`/`myRegistrationId`
+  for the requesting participant.
+- `client`: `npm run build` succeeds (104 modules, no import errors).
+
+**Not independently verified:** interactive browser testing (no browser tool
+in this environment) — same caveat carried forward from Phases 3–4.
+
+**Scope note:** the spec's phase list puts the "My Registrations" page in
+Phase 6, but a dedicated list page was the natural place to demonstrate and
+test the cancel flow (`RegistrationButton` alone only covers the single-event
+view), so it was pulled forward here. Phase 6 now only needs to add
+search/filter/sort to Explore and the "Recommended for you" section.
+
+**Not started:** Phases 6–11 (Explore search/filter/sort + recommendations,
+organizer analytics, map integration, general polish, automated tests,
+docs).

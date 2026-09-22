@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Explore from './pages/Explore';
 import EventDetails from './pages/EventDetails';
+import MyRegistrations from './pages/MyRegistrations';
 import ManageEvents from './pages/organizer/ManageEvents';
 import CreateEvent from './pages/organizer/CreateEvent';
 import EditEvent from './pages/organizer/EditEvent';
@@ -19,6 +20,7 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Explore />} />
           <Route path="/events/:id" element={<EventDetails />} />
+          <Route path="/my-registrations" element={<MyRegistrations />} />
 
           <Route element={<ProtectedRoute roles={['organizer']} />}>
             <Route path="/organizer/events" element={<ManageEvents />} />

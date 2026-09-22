@@ -6,6 +6,7 @@ const STYLES = {
   Ongoing: 'bg-blue-50 text-blue-700',
   Completed: 'bg-neutral-100 text-neutral-500',
   Cancelled: 'bg-red-50 text-red-600',
+  Registered: 'bg-emerald-50 text-emerald-700',
 };
 
 export default function EventStatus({ status }) {

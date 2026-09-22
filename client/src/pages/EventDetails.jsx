@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchEventById } from '../services/events.service';
 import EventStatus from '../components/EventStatus';
 import CapacityIndicator from '../components/CapacityIndicator';
+import RegistrationButton from '../components/RegistrationButton';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 
@@ -20,27 +21,20 @@ export default function EventDetails() {
   const [event, setEvent] = useState(null);
   const [status, setStatus] = useState('loading');
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setStatus('loading');
-      try {
-        const data = await fetchEventById(id);
-        if (!cancelled) {
-          setEvent(data);
-          setStatus('ready');
-        }
-      } catch {
-        if (!cancelled) setStatus('error');
-      }
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchEventById(id);
+      setEvent(data);
+      setStatus('ready');
+    } catch {
+      setStatus('error');
     }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
   }, [id]);
+
+  useEffect(() => {
+    setStatus('loading');
+    load();
+  }, [load]);
 
   if (status === 'loading') return <LoadingState label="Loading event…" />;
   if (status === 'error' || !event) return <ErrorState message="Event not found." />;
@@ -83,6 +77,16 @@ export default function EventDetails() {
           <p className="text-neutral-400 mb-1">Seats</p>
           <CapacityIndicator registeredCount={event.registeredCount} capacity={event.capacity} />
         </div>
+      </div>
+
+      {event.isRegistered && (
+        <p className="mt-6 rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
+          You're registered for this event.
+        </p>
+      )}
+
+      <div className="mt-4">
+        <RegistrationButton event={event} onChange={load} />
       </div>
     </div>
   );

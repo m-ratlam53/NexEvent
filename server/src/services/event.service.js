@@ -1,6 +1,7 @@
 import { Event } from '../models/Event.js';
+import { Registration } from '../models/Registration.js';
 import { AppError } from '../utils/AppError.js';
-import { EVENT_STATUS } from '../utils/constants.js';
+import { EVENT_STATUS, REGISTRATION_STATUS } from '../utils/constants.js';
 import { deriveDisplayStatus } from '../utils/deriveDisplayStatus.js';
 import { validateEventInput } from '../validators/event.validators.js';
 
@@ -9,8 +10,20 @@ function pickEventFields(data) {
   return { name, description, category, date, startTime, endTime, mode, location, capacity };
 }
 
-// registeredCount defaults to 0 until the Registration model exists (Phase 5),
-// which will pass in Registration.countDocuments({event, status:"registered"}).
+// Registration counts are always derived from Registration.countDocuments,
+// never a stored counter on Event (spec section 7) — never out of sync.
+async function countRegisteredByEvent(eventIds) {
+  const counts = await Registration.aggregate([
+    { $match: { event: { $in: eventIds }, status: REGISTRATION_STATUS.REGISTERED } },
+    { $group: { _id: '$event', count: { $sum: 1 } } },
+  ]);
+  return new Map(counts.map((c) => [c._id.toString(), c.count]));
+}
+
+async function countRegisteredForEvent(eventId) {
+  return Registration.countDocuments({ event: eventId, status: REGISTRATION_STATUS.REGISTERED });
+}
+
 function toEventDTO(eventDoc, registeredCount = 0) {
   const event = eventDoc.toObject ? eventDoc.toObject() : eventDoc;
   return {
@@ -82,7 +95,8 @@ export async function listPublishedEvents({ category, date, search } = {}) {
   }
 
   const events = await Event.find(query).sort({ date: 1 }).populate('organizer', 'name');
-  return events.map((event) => toEventDTO(event, 0));
+  const countMap = await countRegisteredByEvent(events.map((e) => e._id));
+  return events.map((event) => toEventDTO(event, countMap.get(event._id.toString()) || 0));
 }
 
 export async function getEventById(eventId, requester) {
@@ -94,10 +108,27 @@ export async function getEventById(eventId, requester) {
     throw new AppError('Event not found', 404);
   }
 
-  return toEventDTO(event, 0);
+  const registeredCount = await countRegisteredForEvent(event._id);
+
+  let isRegistered = false;
+  let myRegistrationId = null;
+  if (requester) {
+    const activeRegistration = await Registration.findOne({
+      event: event._id,
+      participant: requester.id,
+      status: REGISTRATION_STATUS.REGISTERED,
+    });
+    if (activeRegistration) {
+      isRegistered = true;
+      myRegistrationId = activeRegistration._id;
+    }
+  }
+
+  return { ...toEventDTO(event, registeredCount), isRegistered, myRegistrationId };
 }
 
 export async function getOrganizerEvents(organizerId) {
   const events = await Event.find({ organizer: organizerId }).sort({ createdAt: -1 });
-  return events.map((event) => toEventDTO(event, 0));
+  const countMap = await countRegisteredByEvent(events.map((e) => e._id));
+  return events.map((event) => toEventDTO(event, countMap.get(event._id.toString()) || 0));
 }
