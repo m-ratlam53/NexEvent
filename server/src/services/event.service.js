@@ -12,7 +12,8 @@ function pickEventFields(data) {
 
 // Registration counts are always derived from Registration.countDocuments,
 // never a stored counter on Event (spec section 7) — never out of sync.
-async function countRegisteredByEvent(eventIds) {
+// Exported for reuse by discovery.service.js.
+export async function countRegisteredByEvent(eventIds) {
   const counts = await Registration.aggregate([
     { $match: { event: { $in: eventIds }, status: REGISTRATION_STATUS.REGISTERED } },
     { $group: { _id: '$event', count: { $sum: 1 } } },
@@ -24,7 +25,7 @@ async function countRegisteredForEvent(eventId) {
   return Registration.countDocuments({ event: eventId, status: REGISTRATION_STATUS.REGISTERED });
 }
 
-function toEventDTO(eventDoc, registeredCount = 0) {
+export function toEventDTO(eventDoc, registeredCount = 0) {
   const event = eventDoc.toObject ? eventDoc.toObject() : eventDoc;
   return {
     ...event,
@@ -77,7 +78,17 @@ export async function cancelEvent(eventId, organizerId) {
   return toEventDTO(event);
 }
 
-export async function listPublishedEvents({ category, date, search } = {}) {
+function applySort(events, sort) {
+  if (sort === 'popularity') {
+    return [...events].sort((a, b) => b.registeredCount - a.registeredCount);
+  }
+  if (sort === 'name') {
+    return [...events].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  return events; // 'date' (default) — already sorted soonest-first by the query
+}
+
+export async function listPublishedEvents({ category, date, search, sort } = {}) {
   const query = { status: EVENT_STATUS.PUBLISHED };
 
   if (category) query.category = category;
@@ -96,7 +107,8 @@ export async function listPublishedEvents({ category, date, search } = {}) {
 
   const events = await Event.find(query).sort({ date: 1 }).populate('organizer', 'name');
   const countMap = await countRegisteredByEvent(events.map((e) => e._id));
-  return events.map((event) => toEventDTO(event, countMap.get(event._id.toString()) || 0));
+  const dtos = events.map((event) => toEventDTO(event, countMap.get(event._id.toString()) || 0));
+  return applySort(dtos, sort);
 }
 
 export async function getEventById(eventId, requester) {

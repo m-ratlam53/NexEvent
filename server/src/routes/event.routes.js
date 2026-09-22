@@ -6,6 +6,7 @@ import { USER_ROLES } from '../utils/constants.js';
 const router = Router();
 
 router.get('/', eventController.list);
+router.get('/recommended', authenticate, authorize(USER_ROLES.PARTICIPANT), eventController.recommended);
 router.get('/:id', optionalAuthenticate, eventController.getById);
 router.post('/', authenticate, authorize(USER_ROLES.ORGANIZER), eventController.create);
 router.put('/:id', authenticate, authorize(USER_ROLES.ORGANIZER), eventController.update);

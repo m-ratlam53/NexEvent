@@ -5,6 +5,11 @@ export async function fetchEvents(params) {
   return data.events;
 }
 
+export async function fetchRecommendedEvents() {
+  const { data } = await api.get('/events/recommended');
+  return data.events;
+}
+
 export async function fetchEventById(id) {
   const { data } = await api.get(`/events/${id}`);
   return data.event;

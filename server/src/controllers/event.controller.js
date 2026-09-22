@@ -1,4 +1,5 @@
 import * as eventService from '../services/event.service.js';
+import { getRecommendedEvents } from '../services/discovery.service.js';
 
 export async function create(req, res, next) {
   try {
@@ -38,8 +39,17 @@ export async function cancel(req, res, next) {
 
 export async function list(req, res, next) {
   try {
-    const { category, date, search } = req.query;
-    const events = await eventService.listPublishedEvents({ category, date, search });
+    const { category, date, search, sort } = req.query;
+    const events = await eventService.listPublishedEvents({ category, date, search, sort });
+    res.json({ events });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function recommended(req, res, next) {
+  try {
+    const events = await getRecommendedEvents(req.user.id);
     res.json({ events });
   } catch (err) {
     next(err);

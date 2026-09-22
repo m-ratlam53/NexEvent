@@ -199,3 +199,48 @@ search/filter/sort to Explore and the "Recommended for you" section.
 **Not started:** Phases 6–11 (Explore search/filter/sort + recommendations,
 organizer analytics, map integration, general polish, automated tests,
 docs).
+
+## Phase 6 — Discovery & My Registrations ✅
+(My Registrations page itself was already built in Phase 5 — see the scope
+note above. This phase covers what was left: search/filter/sort on Explore
+and the "Recommended for you" section.)
+- **Backend:** `GET /api/events` gained a `sort` query param (`date` default
+  soonest-first via the Mongo query; `popularity` and `name` applied in JS
+  after `registeredCount` is computed, since it's a derived field). New
+  `discovery.service.js` implements section 11's ranked fallback in
+  `getRecommendedEvents`, documented inline: rule 1 picks the *candidate
+  pool* (events in the participant's previously-registered categories, or
+  the full published/upcoming pool if they have no history or none of
+  those categories currently have events); rules 2/3 are the *sort* applied
+  to that pool (registration count descending, soonest date as the
+  tiebreak — which also naturally covers the common all-zero-count case).
+  Already-registered and `Completed` events are excluded from the pool.
+  `countRegisteredByEvent`/`toEventDTO` were exported from
+  `event.service.js` for reuse here instead of duplicating the counting
+  logic. New route: `GET /api/events/recommended` (participant-only,
+  mounted before `/:id` to avoid a route collision).
+- **Frontend:** `EventSearch` (debounced text input) and `EventFilters`
+  (category/date/sort, with a clear-filters affordance) components,
+  `fetchRecommendedEvents` service call. `Explore` now holds search/filter
+  state, refetches on change, and renders a "Recommended for you" section
+  above the main grid for participants only (hidden entirely for
+  organizers/when there's nothing to recommend).
+
+**Verified (live smoke test against re-seeded local MongoDB):**
+- `?sort=name` returns events alphabetically; `?sort=popularity` with all
+  counts at 0 falls back to date order (confirming the tiebreak); default
+  sort is soonest-first; category filter composes correctly with sort.
+- Recommendations, no registration history: full published/upcoming pool
+  ranked by popularity/date, `Completed` seed event correctly excluded.
+- Recommendations, history exists but no other event currently shares that
+  category: falls back to the full pool rather than returning empty.
+- Recommendations, history exists and a matching-category event exists:
+  pool narrows to just that category (verified by publishing a second
+  Technology event and confirming it becomes the sole recommendation).
+- `client`: `npm run build` succeeds (106 modules, no import errors).
+
+**Not independently verified:** interactive browser testing (no browser tool
+in this environment) — same caveat carried forward from Phases 3–5.
+
+**Not started:** Phases 7–11 (organizer analytics, map integration, general
+polish, automated tests, docs).
