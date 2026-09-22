@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchOrganizerEvents, publishEventRequest, cancelEventRequest } from '../../services/events.service';
 import { fetchOrganizerAnalytics } from '../../services/analytics.service';
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [status, setStatus] = useState('loading');
   const [pendingCancelId, setPendingCancelId] = useState(null);
   const [actionError, setActionError] = useState('');
+  const [activeTab, setActiveTab] = useState('All');
 
   const load = useCallback(async () => {
     try {
@@ -64,6 +65,18 @@ export default function Dashboard() {
     }
   }
 
+  const tabs = useMemo(
+    () => ({
+      All: events,
+      Published: events.filter((e) => e.status === 'published'),
+      Draft: events.filter((e) => e.status === 'draft'),
+      Completed: events.filter((e) => e.displayStatus === 'Completed'),
+      Cancelled: events.filter((e) => e.status === 'cancelled'),
+    }),
+    [events],
+  );
+  const visibleEvents = tabs[activeTab] || [];
+
   if (status === 'loading') return <LoadingState label="Loading dashboard…" />;
   if (status === 'error') return <ErrorState message="Couldn't load your dashboard." />;
 
@@ -102,13 +115,38 @@ export default function Dashboard() {
 
       {actionError && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{actionError}</p>}
 
-      {events.length === 0 && (
+      {events.length === 0 ? (
         <EmptyState title="No events yet" description="Create your first event to get started." />
+      ) : (
+        <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-neutral-100 p-1">
+          {Object.keys(tabs).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
+                activeTab === tab ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'
+              }`}
+            >
+              {tab}
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-xs ${
+                  activeTab === tab ? 'bg-brand-50 text-brand-700' : 'bg-neutral-200 text-neutral-500'
+                }`}
+              >
+                {tabs[tab].length}
+              </span>
+            </button>
+          ))}
+        </div>
       )}
 
-      {events.length > 0 && (
+      {events.length > 0 && visibleEvents.length === 0 && (
+        <EmptyState title={`No ${activeTab.toLowerCase()} events`} />
+      )}
+
+      {visibleEvents.length > 0 && (
         <RevealGroup className="space-y-2.5" stagger={0.04}>
-          {events.map((event) => (
+          {visibleEvents.map((event) => (
             <RevealItem key={event._id}>
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
                 <div className="min-w-0">

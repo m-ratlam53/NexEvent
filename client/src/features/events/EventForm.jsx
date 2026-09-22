@@ -4,6 +4,17 @@ import { EVENT_CATEGORIES } from '../../utils/constants';
 import EventMap from '../../components/EventMap';
 import { FIELD_CLASS, LABEL_CLASS, BUTTON_PRIMARY } from '../../utils/styles';
 
+function StepHeading({ step, title }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-fuchsia-500 text-xs font-bold text-white">
+        {step}
+      </span>
+      <h2 className="font-display text-base font-semibold text-neutral-900">{title}</h2>
+    </div>
+  );
+}
+
 const EMPTY_FORM = {
   name: '',
   description: '',
@@ -92,7 +103,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
       {/* Basic Details Section */}
       <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="font-display text-base font-semibold text-neutral-900">Event Overview</h2>
+        <StepHeading step={1} title="Event Overview" />
 
         <div>
           <label className={LABEL_CLASS}>Event Name *</label>
@@ -178,7 +189,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
       {/* Date & Time Section */}
       <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="font-display text-base font-semibold text-neutral-900">Date & Schedule</h2>
+        <StepHeading step={2} title="Date & Schedule" />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
@@ -224,8 +235,8 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
             className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6"
           >
             <div>
-              <h2 className="font-display text-base font-semibold text-neutral-900">Venue Location</h2>
-              <p className="mt-0.5 text-xs text-neutral-500">
+              <StepHeading step={3} title="Venue Location" />
+              <p className="mt-0.5 pl-[34px] text-xs text-neutral-500">
                 Search and select the venue. A map marker will be shown to attendees.
               </p>
             </div>
@@ -239,7 +250,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
       {/* Capacity & Deadline Section */}
       <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="font-display text-base font-semibold text-neutral-900">Capacity & Registration Cutoff</h2>
+        <StepHeading step={4} title="Capacity & Registration Cutoff" />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -270,7 +281,7 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
 
       {/* Poster Upload Section */}
       <div className="space-y-4 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="font-display text-base font-semibold text-neutral-900">Event Poster</h2>
+        <StepHeading step={5} title="Event Poster" />
 
         {form.posterUrl ? (
           <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 p-2 sm:p-3">

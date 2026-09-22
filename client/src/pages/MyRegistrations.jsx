@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchMyRegistrations, cancelRegistrationRequest } from '../services/registrations.service';
 import { useToast } from '../context/ToastContext';
@@ -9,12 +9,21 @@ import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import PageFade, { RevealGroup, RevealItem } from '../components/motion/Reveal';
 
+function isEventPast(event) {
+  if (!event) return false;
+  const end = new Date(event.date);
+  const [hours, minutes] = (event.endTime || '23:59').split(':').map(Number);
+  end.setHours(hours, minutes, 0, 0);
+  return new Date() > end;
+}
+
 export default function MyRegistrations() {
   const { showToast } = useToast();
   const [registrations, setRegistrations] = useState([]);
   const [status, setStatus] = useState('loading');
   const [pendingCancelId, setPendingCancelId] = useState(null);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('Upcoming');
 
   const load = useCallback(async () => {
     try {
@@ -30,6 +39,18 @@ export default function MyRegistrations() {
     setStatus('loading');
     load();
   }, [load]);
+
+  const tabs = useMemo(() => {
+    const active = registrations.filter((r) => r.status !== 'cancelled');
+    return {
+      Upcoming: active.filter((r) => !isEventPast(r.event)),
+      Waitlisted: registrations.filter((r) => r.status === 'waitlisted'),
+      Past: active.filter((r) => isEventPast(r.event)),
+      Cancelled: registrations.filter((r) => r.status === 'cancelled'),
+    };
+  }, [registrations]);
+
+  const visible = tabs[activeTab] || [];
 
   async function confirmCancel() {
     const id = pendingCancelId;
@@ -56,17 +77,39 @@ export default function MyRegistrations() {
         <p className="mt-1 text-sm text-neutral-500">Events you're registered for or waitlisted on.</p>
       </PageFade>
 
-      {error && <p className="mb-4 mt-6 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      <div className="mb-6 mt-6 flex flex-wrap gap-1 rounded-xl bg-neutral-100 p-1">
+        {Object.keys(tabs).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition-all ${
+              activeTab === tab ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'
+            }`}
+          >
+            {tab}
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-xs ${
+                activeTab === tab ? 'bg-brand-50 text-brand-700' : 'bg-neutral-200 text-neutral-500'
+              }`}
+            >
+              {tabs[tab].length}
+            </span>
+          </button>
+        ))}
+      </div>
 
-      {registrations.length === 0 && (
-        <div className="mt-6">
-          <EmptyState title="No registrations yet" description="Explore events and register to see them here." />
-        </div>
+      {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+
+      {visible.length === 0 && (
+        <EmptyState
+          title={`No ${activeTab.toLowerCase()} registrations`}
+          description="Explore events and register to see them here."
+        />
       )}
 
-      {registrations.length > 0 && (
-        <RevealGroup className="mt-6 space-y-3" stagger={0.05}>
-          {registrations.map((reg) => (
+      {visible.length > 0 && (
+        <RevealGroup className="space-y-3" stagger={0.05}>
+          {visible.map((reg) => (
             <RevealItem key={reg._id}>
               <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated">
                 <Link to={`/events/${reg.event?._id}`} className="min-w-0 flex-1">

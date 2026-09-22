@@ -83,14 +83,32 @@ export default function Signup() {
           </div>
           <div>
             <label className={LABEL_CLASS}>I am a</label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className={FIELD_CLASS}
-            >
-              <option value="participant">Participant</option>
-              <option value="organizer">Organizer</option>
-            </select>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: 'participant', label: 'Participant', hint: 'Discover & attend' },
+                { value: 'organizer', label: 'Organizer', hint: 'Host & publish' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, role: option.value })}
+                  className={`rounded-xl border p-3 text-left transition-all ${
+                    form.role === option.value
+                      ? 'border-brand-400 bg-brand-50 shadow-sm ring-1 ring-brand-400'
+                      : 'border-neutral-200 bg-white hover:border-neutral-300'
+                  }`}
+                >
+                  <p
+                    className={`text-sm font-semibold ${
+                      form.role === option.value ? 'text-brand-700' : 'text-neutral-900'
+                    }`}
+                  >
+                    {option.label}
+                  </p>
+                  <p className="mt-0.5 text-xs text-neutral-500">{option.hint}</p>
+                </button>
+              ))}
+            </div>
           </div>
           <button type="submit" disabled={submitting} className={`${BUTTON_PRIMARY} w-full`}>
             {submitting ? 'Creating account…' : 'Sign up'}
