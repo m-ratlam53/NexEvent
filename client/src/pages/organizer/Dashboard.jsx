@@ -190,21 +190,26 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-1 border-t border-neutral-100 pt-3 dark:border-neutral-800">
-                  <Link to={`/events/${event._id}`} className={ACTION_LINK_CLASS}>
-                    View
-                  </Link>
-                  <Link to={`/organizer/events/${event._id}/edit`} className={ACTION_LINK_CLASS}>
-                    Edit
-                  </Link>
-                  {event.status === 'draft' && (
-                    <button
-                      onClick={() => handlePublish(event._id)}
-                      className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-500/15 dark:hover:text-brand-300"
-                    >
-                      Publish
-                    </button>
-                  )}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-1 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <Link to={`/events/${event._id}`} className={ACTION_LINK_CLASS}>
+                      View
+                    </Link>
+                    <Link to={`/organizer/events/${event._id}/edit`} className={ACTION_LINK_CLASS}>
+                      Edit
+                    </Link>
+                    {event.status === 'draft' && (
+                      <button
+                        onClick={() => handlePublish(event._id)}
+                        className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-700 dark:text-brand-400 dark:hover:bg-brand-500/15 dark:hover:text-brand-300"
+                      >
+                        Publish
+                      </button>
+                    )}
+                    <Link to={`/organizer/events/${event._id}/participants`} className={ACTION_LINK_CLASS}>
+                      Participants
+                    </Link>
+                  </div>
                   {event.status !== 'cancelled' && (
                     <button
                       onClick={() => setPendingCancelId(event._id)}
@@ -213,12 +218,6 @@ export default function Dashboard() {
                       Cancel
                     </button>
                   )}
-                  <Link to={`/organizer/events/${event._id}/participants`} className={ACTION_LINK_CLASS}>
-                    Participants
-                  </Link>
-                  <Link to={`/organizer/events/${event._id}/analytics`} className={ACTION_LINK_CLASS}>
-                    Analytics
-                  </Link>
                 </div>
               </TiltCard>
             </RevealItem>
