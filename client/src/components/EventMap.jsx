@@ -53,12 +53,28 @@ export default function EventMap({ mode = 'display', value, onChange }) {
       : null,
   );
 
+  // Set right before setQuery() whenever the new query text came from a
+  // selection (search result click, map click, marker drag) rather than
+  // typing, so that filling it back in doesn't trigger a pointless
+  // re-search of the address we just resolved.
+  const skipNextSearchRef = useRef(false);
+
   useEffect(() => {
     if (mode !== 'picker' || !MAPTILER_KEY) return undefined;
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return undefined;
+    }
     if (!query || query.trim().length < 3) {
       setResults([]);
       return undefined;
     }
+
+    // Without this, an older in-flight request that happens to resolve
+    // after a newer one silently overwrites the newer (correct) results —
+    // including clobbering them with an empty list — since nothing here
+    // previously stopped a stale response from being applied.
+    let cancelled = false;
 
     const handle = setTimeout(async () => {
       setSearching(true);
@@ -67,15 +83,18 @@ export default function EventMap({ mode = 'display', value, onChange }) {
           `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${MAPTILER_KEY}&limit=5`,
         );
         const data = await res.json();
-        setResults(data.features || []);
+        if (!cancelled) setResults(data.features || []);
       } catch {
-        setResults([]);
+        if (!cancelled) setResults([]);
       } finally {
-        setSearching(false);
+        if (!cancelled) setSearching(false);
       }
     }, 400);
 
-    return () => clearTimeout(handle);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [query, mode]);
 
   useEffect(() => {
@@ -106,6 +125,7 @@ export default function EventMap({ mode = 'display', value, onChange }) {
           const address = await reverseGeocode(lng, lat);
           const location = { address, latitude: lat, longitude: lng };
           setSelected(location);
+          skipNextSearchRef.current = true;
           setQuery(address);
           onChange?.(location);
         });
@@ -130,6 +150,7 @@ export default function EventMap({ mode = 'display', value, onChange }) {
       const address = await reverseGeocode(lng, lat);
       const location = { address, latitude: lat, longitude: lng };
       setSelected(location);
+      skipNextSearchRef.current = true;
       setQuery(address);
       setResults([]);
       onChange?.(location);
@@ -145,6 +166,7 @@ export default function EventMap({ mode = 'display', value, onChange }) {
     const address = feature.place_name || feature.text;
     const location = { address, latitude, longitude };
     setSelected(location);
+    skipNextSearchRef.current = true;
     setQuery(address);
     setResults([]);
     onChange?.(location);
