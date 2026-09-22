@@ -1,11 +1,18 @@
+import { Routes, Route } from 'react-router-dom';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Home from './pages/Home';
+import { ProtectedRoute } from './routes/ProtectedRoute';
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-neutral-900">NexEvent</h1>
-        <p className="mt-2 text-neutral-500">Foundation scaffold — routes and pages coming in later phases.</p>
-      </div>
-    </div>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Home />} />
+      </Route>
+    </Routes>
   );
 }
 

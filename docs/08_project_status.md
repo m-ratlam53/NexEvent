@@ -33,3 +33,39 @@ Repository was empty except `docs/project_spec.md`. No code, no git history. Ass
 **Known limitation carried forward:** no local MongoDB URI/Atlas credentials were provided — `.env` used for local smoke testing only, with a placeholder JWT secret, and is git-ignored. Real secrets must be supplied via environment before deployment/demo.
 
 **Not started:** everything in Phases 3–11 (auth, event management, registration, discovery, analytics, map integration, polish, tests, docs).
+
+## Phase 3 — Auth ✅
+- **Backend:** `User` model (`role` enum, unique email, `passwordHash` stripped
+  from every JSON response via a `toJSON` transform). `auth.service.js` owns
+  signup/login logic (bcrypt hashing, JWT issuance); `auth.validators.js`
+  checks required fields, email format, and password strength before hitting
+  the DB. `auth.middleware.js` provides `authenticate` (verifies the Bearer
+  JWT, sets `req.user = {id, role}`) and `authorize(...roles)` for role-gated
+  routes — the reusable building block event/registration ownership checks
+  will use in later phases. `errorHandler` extended to turn Mongoose
+  `ValidationError`, duplicate-key (11000), and `CastError` into clean 4xx
+  messages instead of leaking raw DB errors. Routes: `POST /api/auth/register`,
+  `POST /api/auth/login`, `GET /api/auth/me` (protected).
+- **Frontend:** `services/api.js` (axios instance, attaches JWT from
+  `localStorage` to every request), `context/AuthContext.jsx` (user/token/
+  loading state, `login`/`signup`/`logout`, restores session via `/auth/me`
+  on load), `routes/ProtectedRoute.jsx` (redirects unauthenticated users to
+  `/login`, supports role restriction). Functional `Login`/`Signup` pages and
+  a placeholder authenticated `Home` page wired into `App.jsx`/`main.jsx`
+  routing.
+
+**Verified (live smoke test against local MongoDB):**
+- Signup issues a token and never returns `passwordHash`.
+- Duplicate email → 409; weak password → 400 with a specific message.
+- Login: correct credentials → 200 + token; wrong password → 401 with a
+  generic "Invalid email or password" (no user-enumeration leak).
+- `GET /api/auth/me`: no token → 401; garbage token → 401; valid token → 200
+  with the current user.
+- `client`: `npm run build` succeeds (86 modules, no import errors).
+
+**Not independently verified:** interactive browser testing of the
+Login/Signup forms — no browser tool available in this environment. The
+build's successful module resolution plus the passing API tests behind it
+give reasonable confidence, but the UI itself hasn't been clicked through.
+
+**Not started:** Phases 4–11.
