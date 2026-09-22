@@ -7,14 +7,18 @@ import {
   publishEventRequest,
   cancelEventRequest,
 } from '../../services/events.service';
+import { useToast } from '../../context/ToastContext';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
 
 export default function EditEvent() {
   const { id } = useParams();
+  const { showToast } = useToast();
   const [event, setEvent] = useState(null);
   const [status, setStatus] = useState('loading');
   const [actionError, setActionError] = useState('');
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,21 +40,25 @@ export default function EditEvent() {
   async function handleSubmit(values) {
     const updated = await updateEventRequest(id, values);
     setEvent(updated);
+    showToast('Changes saved.');
   }
 
   async function handlePublish() {
     setActionError('');
     try {
       setEvent(await publishEventRequest(id));
+      showToast('Event published.');
     } catch (err) {
       setActionError(err.response?.data?.error || 'Could not publish this event');
     }
   }
 
-  async function handleCancel() {
+  async function handleCancelConfirmed() {
+    setConfirmCancelOpen(false);
     setActionError('');
     try {
       setEvent(await cancelEventRequest(id));
+      showToast('Event cancelled.');
     } catch (err) {
       setActionError(err.response?.data?.error || 'Could not cancel this event');
     }
@@ -74,7 +82,7 @@ export default function EditEvent() {
           )}
           {event.status !== 'cancelled' && (
             <button
-              onClick={handleCancel}
+              onClick={() => setConfirmCancelOpen(true)}
               className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
             >
               Cancel event
@@ -87,6 +95,16 @@ export default function EditEvent() {
         initialValues={{ ...event, date: event.date?.slice(0, 10) }}
         onSubmit={handleSubmit}
         submitLabel="Save changes"
+      />
+
+      <ConfirmDialog
+        open={confirmCancelOpen}
+        title="Cancel this event?"
+        description="Participants will no longer be able to register. Existing registrations are kept, and the event will show as cancelled."
+        confirmLabel="Cancel event"
+        danger
+        onConfirm={handleCancelConfirmed}
+        onCancel={() => setConfirmCancelOpen(false)}
       />
     </div>
   );

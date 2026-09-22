@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { registerForEvent, cancelRegistrationRequest } from '../services/registrations.service';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -7,6 +8,7 @@ const BLOCKED_STATUSES = ['Completed', 'Cancelled', 'Draft', 'Full'];
 
 export default function RegistrationButton({ event, onChange }) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -18,6 +20,7 @@ export default function RegistrationButton({ event, onChange }) {
     setError('');
     try {
       await registerForEvent(event._id);
+      showToast('Registered — seat confirmed.');
       onChange();
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -32,6 +35,7 @@ export default function RegistrationButton({ event, onChange }) {
     setError('');
     try {
       await cancelRegistrationRequest(event.myRegistrationId);
+      showToast('Registration cancelled — your seat was released.');
       onChange();
     } catch (err) {
       setError(err.response?.data?.error || 'Cancellation failed');

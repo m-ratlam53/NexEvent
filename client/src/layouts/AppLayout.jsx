@@ -7,11 +7,11 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
           <Link to="/" className="font-semibold text-neutral-900">
             NexEvent
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <Link to="/" className="text-neutral-600 hover:text-neutral-900">
               Explore
             </Link>
@@ -25,7 +25,7 @@ export default function AppLayout() {
                 Dashboard
               </Link>
             )}
-            <span className="text-neutral-400">{user?.name}</span>
+            <span className="hidden text-neutral-400 sm:inline">{user?.name}</span>
             <button onClick={logout} className="text-neutral-600 hover:text-neutral-900">
               Log out
             </button>

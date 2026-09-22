@@ -390,3 +390,50 @@ type-then-select part of the picker remains unverified. **Needs a manual
 check in a real browser before demo**, or a follow-up debugging pass.
 
 **Not started:** Phases 9–11 (general polish, automated tests, docs).
+
+## Phase 9 — Polish ✅
+Most of this phase's scope (loading/empty/error states, confirm dialogs)
+was already built incrementally in earlier phases as each screen was
+written, rather than bolted on at the end — `LoadingState`/`ErrorState`/
+`EmptyState`/`ConfirmDialog` are already used consistently across Explore,
+Event Details, My Registrations, the organizer Dashboard, Participants, and
+Event Analytics. What remained for this phase:
+
+- **Toast notifications** (new): `ToastContext`/`ToastProvider`
+  (`client/src/context/ToastContext.jsx`) — a minimal bottom-of-screen
+  toast queue, auto-dismissing after 3s, no external library. Wired into
+  the moments the spec's demo flow calls out as needing visible
+  confirmation: register ("Registered — seat confirmed"), cancel
+  registration ("seat was released") from both `RegistrationButton` and
+  `MyRegistrations`, and organizer publish/cancel/save-changes/create-draft
+  actions on the Dashboard and Create/Edit Event pages.
+- **Consistency fix:** `EditEvent`'s cancel-event action previously fired
+  immediately with no confirmation, inconsistent with the Dashboard's own
+  cancel action (which already used `ConfirmDialog`). Added the same
+  confirm step there.
+- **Responsive pass:** `EventForm`'s Category/Mode and Date/Start/End rows
+  were fixed 2- and 3-column grids with no mobile breakpoint — cramped on a
+  375px-wide phone. Changed to `grid-cols-1 sm:grid-cols-2` /
+  `sm:grid-cols-3`. `AppLayout`'s nav bar was a fixed-height single row
+  (`h-14`, no wrap) that would overflow once "My Registrations" plus a
+  username plus "Log out" didn't fit one line on a phone — changed to a
+  wrapping flex layout with the username hidden below the `sm` breakpoint
+  (least essential item, freeing space for the nav links that matter more).
+
+**Verified live** (headless Chrome + Puppeteer, mobile viewport 375×800,
+against the real app with the real MapTiler key):
+- Explore page at 375px: nav wraps cleanly with no overflow, filters stack
+  to full-width, Recommended-for-you section and event cards render
+  correctly.
+- Registered for an event and captured the toast mid-display: "Registered
+  — seat confirmed" toast visible, seat count correctly updated to 1/100
+  (1%), "You're registered" banner and Cancel-registration button all
+  present and correct.
+- Create Event form at 375px: every previously-2/3-column row now stacks
+  to single full-width fields; the venue map picker also renders correctly
+  at mobile width.
+
+**Not started:** Phases 10–11 (automated tests, docs). The organizer
+picker's interactive search-and-select flow remains unverified from
+Phase 8 (see above) — carried forward, not blocking, since the underlying
+geocoding API and map rendering are both independently confirmed working.

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchOrganizerEvents, publishEventRequest, cancelEventRequest } from '../../services/events.service';
 import { fetchOrganizerAnalytics } from '../../services/analytics.service';
+import { useToast } from '../../context/ToastContext';
 import AnalyticsCard from '../../components/AnalyticsCard';
 import EventStatus from '../../components/EventStatus';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -10,6 +11,7 @@ import ErrorState from '../../components/ErrorState';
 import EmptyState from '../../components/EmptyState';
 
 export default function Dashboard() {
+  const { showToast } = useToast();
   const [stats, setStats] = useState(null);
   const [events, setEvents] = useState([]);
   const [status, setStatus] = useState('loading');
@@ -36,6 +38,7 @@ export default function Dashboard() {
     setActionError('');
     try {
       await publishEventRequest(id);
+      showToast('Event published.');
       await load();
     } catch (err) {
       setActionError(err.response?.data?.error || 'Could not publish event');
@@ -48,6 +51,7 @@ export default function Dashboard() {
     setActionError('');
     try {
       await cancelEventRequest(id);
+      showToast('Event cancelled.');
       await load();
     } catch (err) {
       setActionError(err.response?.data?.error || 'Could not cancel event');

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchMyRegistrations, cancelRegistrationRequest } from '../services/registrations.service';
+import { useToast } from '../context/ToastContext';
 import EventStatus from '../components/EventStatus';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingState from '../components/LoadingState';
@@ -8,6 +9,7 @@ import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 
 export default function MyRegistrations() {
+  const { showToast } = useToast();
   const [registrations, setRegistrations] = useState([]);
   const [status, setStatus] = useState('loading');
   const [pendingCancelId, setPendingCancelId] = useState(null);
@@ -34,6 +36,7 @@ export default function MyRegistrations() {
     setError('');
     try {
       await cancelRegistrationRequest(id);
+      showToast('Registration cancelled — your seat was released.');
       await load();
     } catch (err) {
       setError(err.response?.data?.error || 'Could not cancel registration');
