@@ -89,7 +89,7 @@ export default function EventMap({ mode = 'display', value, onChange }) {
     const lngLat = [selected.longitude, selected.latitude];
 
     if (!markerRef.current) {
-      markerRef.current = new Marker({ color: '#171717' }).setLngLat(lngLat).addTo(mapRef.current);
+      markerRef.current = new Marker({ color: '#7c3aed' }).setLngLat(lngLat).addTo(mapRef.current);
     } else {
       markerRef.current.setLngLat(lngLat);
     }
@@ -106,6 +106,9 @@ export default function EventMap({ mode = 'display', value, onChange }) {
     onChange?.(location);
   }
 
+  const INPUT_CLASS =
+    'w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 shadow-sm transition-all placeholder:text-neutral-400 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15';
+
   if (!MAPTILER_KEY) {
     if (mode === 'picker') {
       return (
@@ -114,20 +117,20 @@ export default function EventMap({ mode = 'display', value, onChange }) {
             value={value?.address || ''}
             onChange={(e) => onChange?.({ address: e.target.value, latitude: null, longitude: null })}
             placeholder="Venue address"
-            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+            className={INPUT_CLASS}
           />
           <p className="text-xs text-neutral-400">
-            Map-based venue search is unavailable (no <code className="font-mono">VITE_MAPTILER_API_KEY</code>{' '}
+            Map-based venue search is unavailable (no <code className="font-mono text-neutral-600">VITE_MAPTILER_API_KEY</code>{' '}
             configured) — plain text address for now.
           </p>
         </div>
       );
     }
     return (
-      <div className="rounded-md border border-dashed border-neutral-300 p-4 text-sm text-neutral-500">
-        Map unavailable — set <code className="font-mono text-xs">VITE_MAPTILER_API_KEY</code> to enable the venue
+      <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 p-4 text-sm text-neutral-500">
+        Map unavailable — set <code className="font-mono text-xs text-neutral-700">VITE_MAPTILER_API_KEY</code> to enable the venue
         map.
-        {value?.address && <p className="mt-2 text-neutral-700">{value.address}</p>}
+        {value?.address && <p className="mt-2 font-medium text-neutral-800">{value.address}</p>}
       </div>
     );
   }
@@ -136,23 +139,43 @@ export default function EventMap({ mode = 'display', value, onChange }) {
     <div className="space-y-3">
       {mode === 'picker' && (
         <div className="relative">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search for a venue or address…"
-            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-          />
-          {searching && <p className="mt-1 text-xs text-neutral-400">Searching…</p>}
+          <div className="relative">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search for a venue or address…"
+              className={`${INPUT_CLASS} pl-9`}
+            />
+            <svg
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          {searching && <p className="mt-1 text-xs text-brand-600">Searching venue…</p>}
           {results.length > 0 && (
-            <ul className="absolute z-10 mt-1 w-full rounded-md border border-neutral-200 bg-white shadow-sm">
+            <ul className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-neutral-200/80 bg-white/95 py-1 shadow-elevated backdrop-blur-md">
               {results.map((feature) => (
                 <li key={feature.id}>
                   <button
                     type="button"
                     onClick={() => handleSelectResult(feature)}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-neutral-50"
+                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm text-neutral-800 transition-colors hover:bg-brand-50 hover:text-brand-900"
                   >
-                    {feature.place_name || feature.text}
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-brand-500">
+                      <path
+                        fillRule="evenodd"
+                        d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433 1.244-.77 3.13-2.17 4.63-4.352C17.5 11.72 18 9.28 18 7a8 8 0 10-16 0c0 2.28.5 4.72 2.001 7a14.28 14.28 0 005.67 4.933zM10 10a3 3 0 100-6 3 3 0 000 6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="truncate">{feature.place_name || feature.text}</span>
                   </button>
                 </li>
               ))}
@@ -161,16 +184,26 @@ export default function EventMap({ mode = 'display', value, onChange }) {
         </div>
       )}
 
-      <div ref={containerRef} className="h-64 w-full overflow-hidden rounded-md border border-neutral-200" />
+      <div ref={containerRef} className="h-64 w-full overflow-hidden rounded-2xl border border-neutral-200/80 shadow-sm" />
 
       {mode === 'display' && selected && (
         <a
           href={buildDirectionsUrl(selected.latitude, selected.longitude)}
           target="_blank"
           rel="noreferrer"
-          className="inline-block text-sm font-medium text-neutral-900 underline"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-all hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-700"
         >
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 text-brand-500">
+            <path
+              fillRule="evenodd"
+              d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433 1.244-.77 3.13-2.17 4.63-4.352C17.5 11.72 18 9.28 18 7a8 8 0 10-16 0c0 2.28.5 4.72 2.001 7a14.28 14.28 0 005.67 4.933zM10 10a3 3 0 100-6 3 3 0 000 6z"
+              clipRule="evenodd"
+            />
+          </svg>
           Get Directions
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3 w-3 text-neutral-400">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.5l11-11m0 0h-7.5m7.5 0v7.5" />
+          </svg>
         </a>
       )}
     </div>

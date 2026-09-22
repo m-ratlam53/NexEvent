@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import EventForm from '../../features/events/EventForm';
 import {
   fetchEventById,
@@ -11,6 +11,9 @@ import { useToast } from '../../context/ToastContext';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import LoadingState from '../../components/LoadingState';
 import ErrorState from '../../components/ErrorState';
+import EventStatus from '../../components/EventStatus';
+import PageFade from '../../components/motion/Reveal';
+import { BUTTON_PRIMARY, BUTTON_DANGER } from '../../utils/styles';
 
 export default function EditEvent() {
   const { id } = useParams();
@@ -73,37 +76,68 @@ export default function EditEvent() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="mb-2 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-neutral-900">Edit Event</h1>
-        <div className="flex gap-2">
-          {event.status === 'draft' && (
-            <button
-              onClick={handlePublish}
-              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
-            >
-              Publish
-            </button>
-          )}
-          {event.status !== 'cancelled' && (
-            <button
-              onClick={() => setConfirmCancelOpen(true)}
-              className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-            >
-              Cancel event
-            </button>
-          )}
+      <Link
+        to="/organizer/events"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:text-neutral-900"
+      >
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+          <path
+            fillRule="evenodd"
+            d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
+            clipRule="evenodd"
+          />
+        </svg>
+        Back to Dashboard
+      </Link>
+
+      <PageFade delay={0.05}>
+        <div className="mb-8 mt-3 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="font-display text-3xl font-bold text-neutral-900">Edit Event</h1>
+              <EventStatus status={event.displayStatus || event.status} />
+            </div>
+            <p className="mt-1 text-sm text-neutral-500">
+              Update event details, timing, venue, or capacity.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            {event.status === 'draft' && (
+              <button onClick={handlePublish} className={BUTTON_PRIMARY}>
+                Publish Event
+              </button>
+            )}
+            {event.status !== 'cancelled' && (
+              <button onClick={() => setConfirmCancelOpen(true)} className={BUTTON_DANGER}>
+                Cancel event
+              </button>
+            )}
+          </div>
         </div>
-      </div>
-      {actionError && <p className="mb-4 text-sm text-red-600">{actionError}</p>}
-      <EventForm
-        initialValues={{
-          ...event,
-          date: event.date?.slice(0, 10),
-          registrationDeadline: event.registrationDeadline?.slice(0, 16) || '',
-        }}
-        onSubmit={handleSubmit}
-        submitLabel="Save changes"
-      />
+
+        {actionError && (
+          <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-600">
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 shrink-0 text-red-500">
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>{actionError}</span>
+          </div>
+        )}
+
+        <EventForm
+          initialValues={{
+            ...event,
+            date: event.date?.slice(0, 10),
+            registrationDeadline: event.registrationDeadline?.slice(0, 16) || '',
+          }}
+          onSubmit={handleSubmit}
+          submitLabel="Save changes"
+        />
+      </PageFade>
 
       <ConfirmDialog
         open={confirmCancelOpen}
