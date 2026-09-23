@@ -3,6 +3,7 @@ import { Registration } from '../models/Registration.js';
 import { AppError } from '../utils/AppError.js';
 import { EVENT_STATUS, REGISTRATION_STATUS } from '../utils/constants.js';
 import { combineDateAndTime } from '../utils/deriveDisplayStatus.js';
+import { countRegisteredByEvent } from './event.service.js';
 
 // Renumbers this event's active waitlist to a contiguous 1..N, ordered by
 // each entry's current position (falling back to join order for any that
@@ -154,12 +155,25 @@ export async function cancelRegistration(participantId, registrationId) {
 }
 
 export async function getParticipantRegistrations(participantId) {
-  return Registration.find({ participant: participantId })
+  const registrations = await Registration.find({ participant: participantId })
     .sort({ createdAt: -1 })
     .populate({
       path: 'event',
       populate: { path: 'organizer', select: 'name' },
     });
+
+  // Event subdocuments come straight from the DB, not through
+  // event.service's toEventDTO, so registeredCount isn't on them yet — the
+  // UI needs it (capacity display), so attach it the same way every other
+  // event listing does: live-derived, never a stored counter.
+  const eventIds = registrations.filter((r) => r.event).map((r) => r.event._id);
+  const countMap = await countRegisteredByEvent(eventIds);
+
+  return registrations.map((reg) => {
+    const obj = reg.toObject();
+    if (obj.event) obj.event.registeredCount = countMap.get(obj.event._id.toString()) || 0;
+    return obj;
+  });
 }
 
 export async function getEventRegistrations(eventId, organizerId) {

@@ -3,12 +3,17 @@ import { Link } from 'react-router-dom';
 import { fetchMyRegistrations, cancelRegistrationRequest } from '../services/registrations.service';
 import { useToast } from '../context/ToastContext';
 import EventStatus from '../components/EventStatus';
+import CapacityIndicator from '../components/CapacityIndicator';
+import EventDetailRow, { SEATS_ICON } from '../components/EventDetailRow';
 import ConfirmDialog from '../components/ConfirmDialog';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import PageFade, { RevealGroup, RevealItem } from '../components/motion/Reveal';
-import { formatEventDate, eventEndDate } from '../utils/eventDateTime';
+import { eventEndDate } from '../utils/eventDateTime';
+
+const ACTION_LINK_CLASS =
+  'inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100';
 
 function isEventPast(event) {
   if (!event) return false;
@@ -118,28 +123,58 @@ export default function MyRegistrations() {
         <RevealGroup className="space-y-3" stagger={0.05}>
           {visible.map((reg) => (
             <RevealItem key={reg._id}>
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition-shadow hover:shadow-elevated dark:border-neutral-800 dark:bg-neutral-900">
-                <Link to={`/events/${reg.event?._id}`} className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">{reg.event?.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    {reg.event ? formatEventDate(reg.event) : ''} · by{' '}
-                    {reg.event?.organizer?.name}
+              <div className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-shadow hover:shadow-elevated dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {reg.event?.category && (
+                      <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
+                        {reg.event.category}
+                      </span>
+                    )}
+                    <EventStatus
+                      status={
+                        reg.status === 'cancelled'
+                          ? 'Cancelled'
+                          : reg.status === 'waitlisted'
+                            ? `Waitlisted · #${reg.waitlistPosition}`
+                            : 'Registered'
+                      }
+                    />
+                  </div>
+                  {reg.event && (
+                    <div className="w-full max-w-[220px] sm:w-56">
+                      <CapacityIndicator
+                        registeredCount={reg.event.registeredCount}
+                        capacity={reg.event.capacity}
+                        icon={SEATS_ICON}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <h3 className="font-display mt-3 truncate text-base font-bold text-neutral-900 dark:text-neutral-100">
+                  {reg.event?.name}
+                </h3>
+                {reg.event?.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-neutral-500 dark:text-neutral-400">
+                    {reg.event.description}
                   </p>
-                </Link>
-                <div className="flex items-center gap-3">
-                  <EventStatus
-                    status={
-                      reg.status === 'cancelled'
-                        ? 'Cancelled'
-                        : reg.status === 'waitlisted'
-                          ? `Waitlisted · #${reg.waitlistPosition}`
-                          : 'Registered'
-                    }
-                  />
+                )}
+
+                {reg.event && (
+                  <div className="mt-4">
+                    <EventDetailRow event={reg.event} />
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-1 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+                  <Link to={`/events/${reg.event?._id}`} className={ACTION_LINK_CLASS}>
+                    View
+                  </Link>
                   {(reg.status === 'registered' || reg.status === 'waitlisted') && (
                     <button
                       onClick={() => setPendingCancelId(reg._id)}
-                      className="text-sm font-medium text-red-600 hover:underline dark:text-red-400"
+                      className="inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
                     >
                       {reg.status === 'waitlisted' ? 'Leave waitlist' : 'Cancel'}
                     </button>

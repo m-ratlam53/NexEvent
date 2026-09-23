@@ -12,7 +12,7 @@ import ErrorState from '../../components/ErrorState';
 import EmptyState from '../../components/EmptyState';
 import TiltCard from '../../components/motion/TiltCard';
 import PageFade, { RevealGroup, RevealItem } from '../../components/motion/Reveal';
-import { formatEventDate } from '../../utils/eventDateTime';
+import EventDetailRow, { SEATS_ICON } from '../../components/EventDetailRow';
 
 const ACTION_LINK_CLASS =
   'inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100';
@@ -161,30 +161,32 @@ export default function Dashboard() {
                 className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-elevated transition-shadow hover:shadow-elevated-lg dark:border-neutral-800 dark:bg-neutral-900"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
-                        {event.category}
-                      </span>
-                      <EventStatus status={event.displayStatus} />
-                    </div>
-                    <h3 className="font-display mt-2 truncate text-base font-bold text-neutral-900 dark:text-neutral-100">
-                      {event.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                      {formatEventDate(event)} · {event.startTime}–{event.endTime}
-                      {event.mode === 'online' ? ' · Online' : event.location?.address ? ` · ${event.location.address}` : ''}
-                    </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
+                      {event.category}
+                    </span>
+                    <EventStatus status={event.displayStatus} />
                   </div>
 
                   <div className="w-full max-w-[220px] sm:w-56">
-                    <CapacityIndicator registeredCount={event.registeredCount} capacity={event.capacity} />
+                    <CapacityIndicator registeredCount={event.registeredCount} capacity={event.capacity} icon={SEATS_ICON} />
                     {event.waitlistedCount > 0 && (
                       <p className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
                         {event.waitlistedCount} waitlisted
                       </p>
                     )}
                   </div>
+                </div>
+
+                <h3 className="font-display mt-3 truncate text-base font-bold text-neutral-900 dark:text-neutral-100">
+                  {event.name}
+                </h3>
+                {event.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-neutral-500 dark:text-neutral-400">{event.description}</p>
+                )}
+
+                <div className="mt-4">
+                  <EventDetailRow event={event} />
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-1 border-t border-neutral-100 pt-3 dark:border-neutral-800">
