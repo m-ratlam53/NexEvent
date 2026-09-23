@@ -109,6 +109,7 @@ Never expose password hashes in any API response. All secrets (Mongo URI, JWT se
   description: String,
   category: String (enum, required),
   date: Date (required),
+  endDate: Date (required),
   startTime: String (required),
   endTime: String (required),
   mode: "onsite" | "online" (required),
@@ -134,6 +135,13 @@ Never expose password hashes in any API response. All secrets (Mongo URI, JWT se
 > storage integration, matching the project's time constraints). Both are
 > optional. See section 9 for deadline enforcement and section 16 for
 > where the poster is shown.
+
+> **Change request (multi-day events)** added `endDate`, always populated
+> (defaults to `date` for a single-day event). The organizer's Create/Edit
+> form offers a Single day / Multiple days toggle; single-day submits
+> `endDate = date`. Every "has this event ended" check (`displayStatus`,
+> registration cutoff) combines `endDate` + `endTime`, not `date` +
+> `endTime`, so it works for both cases without branching. See section 8.
 
 **Registration**
 ```
@@ -167,12 +175,12 @@ Registration counts are always derived from `Registration.countDocuments({event,
 
 `Event.status` stores **only three values**: `draft | published | cancelled`.
 
-**"Upcoming," "ongoing," "completed," "full," and "almost full" are never stored.** They are computed at read time from `status` + `date` + `startTime` + `endTime` + live registration count, and returned as a derived `displayStatus` (computed in the service layer, or computed client-side from the raw fields — pick one approach and apply it consistently).
+**"Upcoming," "ongoing," "completed," "full," and "almost full" are never stored.** They are computed at read time from `status` + `date` + `startTime` + `endDate` + `endTime` + live registration count, and returned as a derived `displayStatus` (computed in the service layer, or computed client-side from the raw fields — pick one approach and apply it consistently).
 
-Derivation logic:
+Derivation logic (`endDate` — see section 7 — defaults to `date`, so this reads the same for single- and multi-day events):
 - If `status === "cancelled"` → displayStatus = `"Cancelled"`
-- Else if current time is after `date`+`endTime` → displayStatus = `"Completed"`
-- Else if current time is between `date`+`startTime` and `date`+`endTime` → displayStatus = `"Ongoing"`
+- Else if current time is after `endDate`+`endTime` → displayStatus = `"Completed"`
+- Else if current time is between `date`+`startTime` and `endDate`+`endTime` → displayStatus = `"Ongoing"`
 - Else if `status === "draft"` → displayStatus = `"Draft"`
 - Else if registered count ≥ capacity → displayStatus = `"Full"`
 - Else if registered count ≥ 90% of capacity → displayStatus = `"Almost Full"`

@@ -60,7 +60,7 @@ export async function registerParticipant(participantId, eventId) {
     throw new AppError('Registration is closed', 400); // 2
   }
 
-  const end = combineDateAndTime(event.date, event.endTime);
+  const end = combineDateAndTime(event.endDate || event.date, event.endTime);
   if (new Date() > end) {
     throw new AppError('This event has already ended', 400); // 4
   }

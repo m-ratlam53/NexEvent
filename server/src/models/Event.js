@@ -7,6 +7,7 @@ const eventSchema = new mongoose.Schema(
     description: { type: String, trim: true },
     category: { type: String, enum: EVENT_CATEGORIES, required: true },
     date: { type: Date, required: true },
+    endDate: { type: Date, required: true },
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     mode: { type: String, enum: Object.values(EVENT_MODE), required: true },

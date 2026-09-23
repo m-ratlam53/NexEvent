@@ -11,6 +11,7 @@ function pickEventFields(data) {
     description,
     category,
     date,
+    endDate,
     startTime,
     endTime,
     mode,
@@ -24,6 +25,10 @@ function pickEventFields(data) {
     description,
     category,
     date,
+    // Falls back to `date` so a single-day event (which never sends its own
+    // endDate) always has one — every read site can rely on endDate existing
+    // without checking for it first.
+    endDate: endDate || date,
     startTime,
     endTime,
     mode,
@@ -117,10 +122,14 @@ export async function listPublishedEvents({ category, date, search, sort } = {})
 
   if (category) query.category = category;
   if (date) {
+    // Overlap match, not exact-day: a multi-day event should surface when
+    // the filtered day falls anywhere inside its date..endDate range.
     const day = new Date(date);
+    day.setHours(0, 0, 0, 0);
     const nextDay = new Date(day);
     nextDay.setDate(day.getDate() + 1);
-    query.date = { $gte: day, $lt: nextDay };
+    query.date = { $lt: nextDay };
+    query.endDate = { $gte: day };
   }
   if (search) {
     query.$or = [

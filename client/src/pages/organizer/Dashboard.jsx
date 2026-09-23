@@ -12,10 +12,7 @@ import ErrorState from '../../components/ErrorState';
 import EmptyState from '../../components/EmptyState';
 import TiltCard from '../../components/motion/TiltCard';
 import PageFade, { RevealGroup, RevealItem } from '../../components/motion/Reveal';
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
+import { formatEventDate } from '../../utils/eventDateTime';
 
 const ACTION_LINK_CLASS =
   'inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100';
@@ -175,7 +172,7 @@ export default function Dashboard() {
                       {event.name}
                     </h3>
                     <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                      {formatDate(event.date)} · {event.startTime}–{event.endTime}
+                      {formatEventDate(event)} · {event.startTime}–{event.endTime}
                       {event.mode === 'online' ? ' · Online' : event.location?.address ? ` · ${event.location.address}` : ''}
                     </p>
                   </div>

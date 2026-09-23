@@ -7,6 +7,11 @@ export function combineDateAndTime(date, time) {
   return combined;
 }
 
+export function isMultiDayEvent(date, endDate) {
+  if (!endDate) return false;
+  return new Date(date).toDateString() !== new Date(endDate).toDateString();
+}
+
 /**
  * Section 8 of the spec: displayStatus is never stored, always derived from
  * status + date + startTime + endTime + live registered count.
@@ -16,7 +21,9 @@ export function deriveDisplayStatus(event, registeredCount = 0) {
 
   const now = new Date();
   const start = combineDateAndTime(event.date, event.startTime);
-  const end = combineDateAndTime(event.date, event.endTime);
+  // `|| event.date` covers any pre-existing document saved before `endDate`
+  // existed on the schema.
+  const end = combineDateAndTime(event.endDate || event.date, event.endTime);
 
   if (now > end) return DISPLAY_STATUS.COMPLETED;
   if (now >= start && now <= end) return DISPLAY_STATUS.ONGOING;

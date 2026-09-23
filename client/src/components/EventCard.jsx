@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom';
 import EventStatus from './EventStatus';
 import TiltCard from './motion/TiltCard';
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-}
+import { formatEventDate } from '../utils/eventDateTime';
 
 export default function EventCard({ event, recommended = false, reason }) {
   const pct = event.capacity > 0 ? Math.min(100, Math.round((event.registeredCount / event.capacity) * 100)) : 0;
@@ -29,7 +26,7 @@ export default function EventCard({ event, recommended = false, reason }) {
           {event.name}
         </h3>
         <p className="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-          {formatDate(event.date)} · {event.startTime}–{event.endTime}
+          {formatEventDate(event)} · {event.startTime}–{event.endTime}
         </p>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
           {event.mode === 'online' ? 'Online' : event.location?.address || 'Venue TBA'}

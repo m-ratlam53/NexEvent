@@ -1,6 +1,6 @@
 import { AppError } from '../utils/AppError.js';
 import { EVENT_CATEGORIES, EVENT_MODE } from '../utils/constants.js';
-import { combineDateAndTime } from '../utils/deriveDisplayStatus.js';
+import { combineDateAndTime, isMultiDayEvent } from '../utils/deriveDisplayStatus.js';
 
 const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 // ~5MB decoded, generous enough for a compressed poster image, small
@@ -8,21 +8,53 @@ const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 const MAX_POSTER_LENGTH = 7_000_000;
 
 export function validateEventInput(body) {
-  const { name, category, date, startTime, endTime, mode, location, capacity, registrationDeadline, posterUrl } =
-    body;
+  const {
+    name,
+    category,
+    date,
+    endDate,
+    startTime,
+    endTime,
+    mode,
+    location,
+    capacity,
+    registrationDeadline,
+    posterUrl,
+  } = body;
   const errors = [];
 
   if (!name || !name.trim()) errors.push('Event name is required');
   if (!category || !EVENT_CATEGORIES.includes(category)) {
     errors.push(`Category must be one of: ${EVENT_CATEGORIES.join(', ')}`);
   }
-  if (!date || Number.isNaN(new Date(date).getTime())) errors.push('A valid event date is required');
+
+  const validDate = date && !Number.isNaN(new Date(date).getTime());
+  if (!validDate) errors.push('A valid event date is required');
+
+  const validEndDate = endDate && !Number.isNaN(new Date(endDate).getTime());
+  if (!validEndDate) errors.push('A valid end date is required');
+  if (validDate && validEndDate && new Date(endDate) < new Date(date)) {
+    errors.push('End date must be on or after the start date');
+  }
 
   const validStart = startTime && TIME_REGEX.test(startTime);
   const validEnd = endTime && TIME_REGEX.test(endTime);
   if (!validStart) errors.push('Start time must be in HH:mm format');
   if (!validEnd) errors.push('End time must be in HH:mm format');
-  if (validStart && validEnd && endTime <= startTime) errors.push('End time must be after start time');
+  // Once the event spans multiple calendar days, the end day is strictly
+  // later than the start day, so the end instant is already after the start
+  // instant regardless of clock times — the same-day ordering check would be
+  // meaningless (and wrong) here.
+  if (
+    validStart &&
+    validEnd &&
+    validDate &&
+    validEndDate &&
+    !isMultiDayEvent(date, endDate) &&
+    endTime <= startTime
+  ) {
+    errors.push('End time must be after start time');
+  }
 
   if (!mode || !Object.values(EVENT_MODE).includes(mode)) errors.push('Mode must be onsite or online');
 

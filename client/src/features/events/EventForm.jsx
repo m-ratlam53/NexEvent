@@ -20,6 +20,7 @@ const EMPTY_FORM = {
   description: '',
   category: EVENT_CATEGORIES[0],
   date: '',
+  endDate: '',
   startTime: '',
   endTime: '',
   mode: 'onsite',
@@ -41,14 +42,30 @@ function initialVenueMode(location) {
   return 'map';
 }
 
+// Duration is UI-only — the backend always stores an endDate (equal to
+// date for a single-day event), so which toggle position to start on is
+// read back from whether the two initial values actually differ.
+function initialDuration(values) {
+  if (values?.endDate && values?.date && values.endDate !== values.date) return 'multi';
+  return 'single';
+}
+
 export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save' }) {
   const [form, setForm] = useState({ ...EMPTY_FORM, ...initialValues });
   const [venueMode, setVenueMode] = useState(() => initialVenueMode(initialValues?.location));
+  const [duration, setDuration] = useState(() => initialDuration(initialValues));
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  // Switching back to single-day drops any multi-day end date so a stale
+  // value can't linger and get silently resubmitted.
+  function handleDurationChange(next) {
+    setDuration(next);
+    if (next === 'single') update('endDate', '');
   }
 
   // Switching to manual mode drops any coordinates from a previous map
@@ -96,9 +113,16 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
       return;
     }
 
+    if (duration === 'multi' && !(form.endDate > form.date)) {
+      setError('End date must be after the start date.');
+      return;
+    }
+
+    const payload = { ...form, endDate: duration === 'single' ? form.date : form.endDate };
+
     setSubmitting(true);
     try {
-      await onSubmit(form);
+      await onSubmit(payload);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong');
     } finally {
@@ -221,38 +245,109 @@ export default function EventForm({ initialValues, onSubmit, submitLabel = 'Save
       <div className={SECTION_CLASS}>
         <StepHeading step={2} title="Date & Schedule" />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className={LABEL_CLASS}>Date *</label>
-            <input
-              type="date"
-              required
-              value={form.date}
-              onChange={(e) => update('date', e.target.value)}
-              className={FIELD_CLASS}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>Start Time *</label>
-            <input
-              type="time"
-              required
-              value={form.startTime}
-              onChange={(e) => update('startTime', e.target.value)}
-              className={FIELD_CLASS}
-            />
-          </div>
-          <div>
-            <label className={LABEL_CLASS}>End Time *</label>
-            <input
-              type="time"
-              required
-              value={form.endTime}
-              onChange={(e) => update('endTime', e.target.value)}
-              className={FIELD_CLASS}
-            />
-          </div>
+        <div className="flex rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
+          <button
+            type="button"
+            onClick={() => handleDurationChange('single')}
+            className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+              duration === 'single'
+                ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+            }`}
+          >
+            Single day
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDurationChange('multi')}
+            className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all ${
+              duration === 'multi'
+                ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-700 dark:text-neutral-100'
+                : 'text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100'
+            }`}
+          >
+            Multiple days
+          </button>
         </div>
+
+        {duration === 'single' ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label className={LABEL_CLASS}>Date *</label>
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => update('date', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>Start Time *</label>
+              <input
+                type="time"
+                required
+                value={form.startTime}
+                onChange={(e) => update('startTime', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>End Time *</label>
+              <input
+                type="time"
+                required
+                value={form.endTime}
+                onChange={(e) => update('endTime', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label className={LABEL_CLASS}>Start Date *</label>
+              <input
+                type="date"
+                required
+                value={form.date}
+                onChange={(e) => update('date', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>Start Time *</label>
+              <input
+                type="time"
+                required
+                value={form.startTime}
+                onChange={(e) => update('startTime', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>End Date *</label>
+              <input
+                type="date"
+                required
+                min={form.date || undefined}
+                value={form.endDate}
+                onChange={(e) => update('endDate', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+            <div>
+              <label className={LABEL_CLASS}>End Time *</label>
+              <input
+                type="time"
+                required
+                value={form.endTime}
+                onChange={(e) => update('endTime', e.target.value)}
+                className={FIELD_CLASS}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Location / Venue Section */}

@@ -9,15 +9,7 @@ import EventMap from '../components/EventMap';
 import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import PageFade, { RevealGroup, RevealItem } from '../components/motion/Reveal';
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
+import { formatEventDate } from '../utils/eventDateTime';
 
 function formatDateTime(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, {
@@ -187,7 +179,7 @@ export default function EventDetails() {
             </RevealItem>
             <RevealItem>
               <InfoCard icon={ICONS.when} label="When">
-                <p>{formatDate(event.date)}</p>
+                <p>{formatEventDate(event, { long: true })}</p>
                 <p className="text-neutral-500">
                   {event.startTime} – {event.endTime}
                 </p>

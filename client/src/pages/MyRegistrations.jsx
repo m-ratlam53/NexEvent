@@ -8,10 +8,11 @@ import LoadingState from '../components/LoadingState';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
 import PageFade, { RevealGroup, RevealItem } from '../components/motion/Reveal';
+import { formatEventDate, eventEndDate } from '../utils/eventDateTime';
 
 function isEventPast(event) {
   if (!event) return false;
-  const end = new Date(event.date);
+  const end = new Date(eventEndDate(event));
   const [hours, minutes] = (event.endTime || '23:59').split(':').map(Number);
   end.setHours(hours, minutes, 0, 0);
   return new Date() > end;
@@ -121,7 +122,7 @@ export default function MyRegistrations() {
                 <Link to={`/events/${reg.event?._id}`} className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">{reg.event?.name}</p>
                   <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    {reg.event ? new Date(reg.event.date).toLocaleDateString() : ''} · by{' '}
+                    {reg.event ? formatEventDate(reg.event) : ''} · by{' '}
                     {reg.event?.organizer?.name}
                   </p>
                 </Link>

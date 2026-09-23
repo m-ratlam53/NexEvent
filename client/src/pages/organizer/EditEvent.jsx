@@ -132,6 +132,7 @@ export default function EditEvent() {
           initialValues={{
             ...event,
             date: event.date?.slice(0, 10),
+            endDate: event.endDate?.slice(0, 10),
             registrationDeadline: event.registrationDeadline?.slice(0, 16) || '',
           }}
           onSubmit={handleSubmit}
